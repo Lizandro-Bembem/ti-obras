@@ -10,6 +10,20 @@ const STATUS = { online: "Em uso", manutencao: "Em manutenção", parado: "Equip
 const URGENCIA = { "Normal": "online", "Média": "manutencao", "Alta": "offline" };
 const SITUACOES = ["Pendente", "Aprovada", "Entregue", "Recusada"];
 const GAIOLAS_PADRAO = [
+const TIPOS_ESTOQUE = [
+    "Cabo", "Câmera", "Corrediça", "Culer de CPU", "DVR", "Fonte de CPU", "Gabinete",
+    "Impressora", "Luva", "Monitor", "Nobreak", "Notebook", "Rádio", "Roteador intelbras",
+    "Starlink", "Suporte de Monitor", "Suporte p/ TinkPad", "Teclado c/ fio",
+    "Teclado s/ fio", "Toner", "Tubo"
+];
+
+function preencherTiposEstoque(valorSelecionado) {
+    const sel = $("#selTipoItemEstoque");
+    if (!sel) return;
+    const ordenados = [...TIPOS_ESTOQUE].sort((a, b) => a.localeCompare(b, "pt-BR"));
+    sel.innerHTML = ordenados.map((t) => `<option value="${escapar(t)}">${escapar(t)}</option>`).join("");
+    if (valorSelecionado && ordenados.includes(valorSelecionado)) sel.value = valorSelecionado;
+}
     { id: "g1", nome: "Gaiola 01" },
     { id: "g2", nome: "Gaiola 02" },
     { id: "g3", nome: "Gaiola 03" },
@@ -2442,15 +2456,10 @@ function abrirModalItemEstoque(item) {
     editandoItemEstoqueId = item ? item.id : null;
     $("#tituloDlgItemEstoque").textContent = item ? "Editar Item" : "Cadastrar Item no Estoque";
     $("#formItemEstoque").reset();
+    preencherTiposEstoque(item ? item.tipo : "");
 
     const f = $("#formItemEstoque").elements;
     if (item) {
-        f.setor.value = item.setor;
-        $("#inputClassificacaoAuto").value = item.classificacao;
-        f.tipo.value = item.tipo;
-        f.nome.value = item.nome;
-        f.status.value = item.status;
-    } else {
         f.setor.value = "TI";
         $("#inputClassificacaoAuto").value = "Equipamento";
         f.status.value = "Guardado";
