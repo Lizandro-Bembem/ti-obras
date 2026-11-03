@@ -1,0 +1,3 @@
+# Backups têm dados reais: nunca enviar para o GitHub
+backup-*.json
+backup-ti-obras-*.json

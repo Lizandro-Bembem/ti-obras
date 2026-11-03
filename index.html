@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Monitoramento de TI em Obras</title>
+  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#25282e">
+</head>
+<body>
+<!-- Tela de senha -->
+<div class="login" id="telaLogin">
+  <div class="login-card">
+    <div class="login-marca"><img class="brand-logo" src="logo.jpg" alt="Campbel"><span>TI em Obras</span></div>
+    <h1 id="loginTitulo">Entrar</h1>
+    <p class="login-sub" id="loginSub"></p>
+    <form id="formLogin" novalidate>
+      <label id="grupoCodigo" hidden>Código de recuperação
+        <input id="loginCodigo" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="XXXX-XXXX-XXXX">
+      </label>
+      <label id="grupoSenha"><span id="rotuloSenha">Senha</span>
+        <div class="campo-senha">
+          <input id="loginSenha" type="password" autocomplete="current-password">
+          <button type="button" class="ver-senha" id="verSenha" aria-label="Mostrar senha">Mostrar</button>
+        </div>
+      </label>
+      <label id="grupoConfirma" hidden>Confirmar senha
+        <input id="loginConfirma" type="password" autocomplete="new-password">
+      </label>
+      <p class="login-erro" id="loginErro" role="alert" hidden></p>
+      <button type="submit" class="btn btn-primary btn-largo" id="btnLogin">Entrar</button>
+    </form>
+    <button type="button" class="link-troca" id="linkTroca">Esqueci a senha</button>
+  </div>
+</div>
+
+<div class="app">
+
+  <!-- Menu lateral -->
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <img class="brand-logo" src="logo.jpg" alt="Campbel">
+      <span>TI em Obras</span>
+    </div>
+
+    <nav class="sidebar-menu">
+      <button class="menu-item-btn" id="btnMenuResumo" type="button">Resumo Geral Consolidado</button>
+      <button class="menu-item-btn ativo" id="btnMenuObras" type="button">Obras</button>
+      <button class="menu-item-btn" id="btnMenuFuncionarios" type="button">Funcionários</button>
+      <button class="menu-item-btn" id="btnMenuEstoque" type="button">Estoque</button>
+      <button class="menu-item-btn" id="btnMenuAuditoria" type="button">Auditoria</button>
+
+
+      <div class="divisor-sidebar"></div>
+
+      <button class="menu-item-btn" id="btnBackup" type="button">Salvar Backup</button>
+      <button class="menu-item-btn" id="btnRestaurar" type="button">Restaurar Backup</button>
+      <input type="file" id="arquivoBackup" accept=".json,application/json" hidden>
+
+      <div class="divisor-sidebar"></div>
+
+      <button class="menu-item-btn" id="btnAlterarSenha" type="button">Alterar Senha</button>
+      <button class="menu-item-btn" id="btnSair" type="button">Sair</button>
+    </nav>
+
+    <div class="info-backup-rodape">
+      <span id="infoBackup"></span>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="faixa-backup" id="faixaBackup" role="alert" hidden>
+      <p id="textoFaixaBackup"></p>
+      <button class="btn btn-primary" id="btnBackupFaixa">Salvar backup agora</button>
+    </div>
+
+    <div class="faixa-backup faixa-perigo" id="faixaArmazenamento" role="alert" hidden>
+      <p id="textoFaixaArmazenamento"></p>
+      <button class="btn btn-primary" id="btnArquivarFaixa">Arquivar auditoria antiga</button>
+    </div>
+
+    <!-- ================= PÁGINA 1: OBRAS E EQUIPAMENTOS ================= -->
+    <div id="paginaObras">
+      <header class="topbar">
+        <button class="menu-toggle" id="menuToggle" aria-label="Abrir menu">☰</button>
+        <button class="btn btn-light btn-toggle-sidebar" type="button" title="Recolher/expandir menu" aria-label="Recolher/expandir menu"><span></span><span></span><span></span></button>
+        <button type="button" class="btn btn-light" id="btnVoltarListaObras" hidden style="margin-right: 6px; font-weight: 600;">← Voltar</button>
+        <div>
+          <h1 id="tituloObra">Obras</h1>
+          <p class="sub" id="subObra"></p>
+        </div>
+        <div class="actions" id="acoesTopoObra" hidden>
+          <button class="btn btn-light" id="btnNovoEquip">+ Equipamento</button>
+          <button class="btn btn-light" id="btnExportarPdf">Exportar PDF</button>
+          <button class="btn btn-primary" id="btnExportar">Exportar Excel</button>
+        </div>
+        <div class="actions" id="acoesTopoListaObras">
+          <button class="btn btn-primary" id="btnNovaObraTop" type="button">+ Nova Obra</button>
+          <button class="btn btn-light" id="btnRemoverObraTop" type="button" style="color: var(--vermelho-aveludado); border-color: var(--vermelho-borda-suave);">Remover Obra</button>
+        </div>
+      </header>
+
+      <!-- Painel de Obras em formato de Lista -->
+      <section class="painel painel-grade-obras" id="painelGradeObras">
+        <div class="painel-head">
+          <div>
+            <h2>Selecione uma Obra</h2>
+            <span class="sub" id="qtdObrasGrade"></span>
+          </div>
+          <div class="botoes-linha">
+            <input type="search" id="buscaObraLista" placeholder="Buscar obra, engenheiro ou responsável...">
+          </div>
+        </div>
+        <div class="tabela-wrap">
+          <table>
+            <thead>
+            <tr>
+              <th>Obra (Ordem Alfabética)</th>
+              <th>Engenheiro Responsável</th>
+              <th>Resp. Escritório</th>
+              <th style="text-align: center;">Equipamentos</th>
+              <th style="text-align: right;">Ação</th>
+            </tr>
+            </thead>
+            <tbody id="gradeObras"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="kpis" id="kpis"></section>
+
+      <!-- Painel de Equipamentos -->
+      <section class="painel" id="painelEquipamentos">
+        <div class="painel-head">
+          <h2>Equipamentos</h2>
+          <div class="botoes-linha">
+            <input type="search" id="busca" placeholder="Buscar por nome, tipo ou responsável">
+          </div>
+        </div>
+        <div class="barra-filtros">
+          <label>Status <select class="filtro-select" id="filtroStatus"></select></label>
+          <label>Tipo <select class="filtro-select" id="filtroTipo"></select></label>
+          <button type="button" class="btn-link" id="limparFiltrosEquip" hidden>Limpar filtros</button>
+          <span class="contagem" id="contagemEquip"></span>
+        </div>
+        <div class="tabela-wrap">
+          <table>
+            <thead id="theadEquip">
+            <tr>
+              <th aria-sort="none"><button type="button" class="th-ordenar" data-ordem="nome">Equipamento <span class="seta"></span></button></th>
+              <th aria-sort="none"><button type="button" class="th-ordenar" data-ordem="tipo">Tipo <span class="seta"></span></button></th>
+              <th aria-sort="none"><button type="button" class="th-ordenar" data-ordem="obra">Obra <span class="seta"></span></button></th>
+              <th aria-sort="none"><button type="button" class="th-ordenar" data-ordem="responsavel">Responsável <span class="seta"></span></button></th>
+              <th aria-sort="none"><button type="button" class="th-ordenar" data-ordem="status">Status <span class="seta"></span></button></th>
+              <th></th>
+            </tr>
+            </thead>
+            <tbody id="corpoTabela"></tbody>
+            <tfoot id="tfootEquip" class="tabela-totais"></tfoot>
+          </table>
+          <p class="vazio" id="vazio" hidden>Nenhum equipamento encontrado. Clique em “+ Equipamento” para cadastrar.</p>
+          <div class="rodape-tabela">
+            <button type="button" class="btn btn-ghost-escuro" id="btnVerTodosEquip" hidden>Ver todos os equipamentos</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Painel de Solicitações -->
+      <section class="painel" id="painelSolicitacoes">
+        <div class="painel-head">
+          <h2>Solicitação de Equipamentos</h2>
+          <div class="botoes-linha">
+            <button class="btn btn-light" id="btnNovaSolic">+ Solicitação</button>
+            <button class="btn btn-light" id="btnExportarSolicPdf">Exportar PDF</button>
+            <button class="btn btn-primary" id="btnExportarSolic">Exportar Excel</button>
+          </div>
+        </div>
+        <div class="barra-filtros">
+          <label>Situação <select class="filtro-select" id="filtroSituacao"></select></label>
+          <label>Urgência <select class="filtro-select" id="filtroUrgencia"></select></label>
+          <button type="button" class="btn-link" id="limparFiltrosSolic" hidden>Limpar filtros</button>
+          <span class="contagem" id="contagemSolic"></span>
+        </div>
+        <div class="tabela-wrap">
+          <table>
+            <thead id="theadSolic">
+            <tr>
+              <th aria-sort="none"><button type="button" class="th-ordenar" data-ordem="equipamento">Equipamento solicitado <span class="seta"></span></button></th>
+              <th aria-sort="none"><button type="button" class="th-ordenar" data-ordem="tipo">Tipo <span class="seta"></span></button></th>
+              <th aria-sort="none"><button type="button" class="th-ordenar" data-ordem="quantidade">Qtd. <span class="seta"></span></button></th>
+              <th aria-sort="none"><button type="button" class="th-ordenar" data-ordem="obra">Obra <span class="seta"></span></button></th>
+              <th aria-sort="none"><button type="button" class="th-ordenar" data-ordem="solicitante">Solicitante <span class="seta"></span></button></th>
+              <th aria-sort="none"><button type="button" class="th-ordenar" data-ordem="urgencia">Urgência <span class="seta"></span></button></th>
+              <th aria-sort="none"><button type="button" class="th-ordenar" data-ordem="situacao">Situação <span class="seta"></span></button></th>
+              <th aria-sort="none"><button type="button" class="th-ordenar" data-ordem="data">Data <span class="seta"></span></button></th>
+              <th></th>
+            </tr>
+            </thead>
+            <tbody id="corpoSolic"></tbody>
+            <tfoot id="tfootSolic" class="tabela-totais"></tfoot>
+          </table>
+          <p class="vazio" id="vazioSolic" hidden>Nenhuma solicitação registrada. Clique em “+ Solicitação” para pedir um equipamento.</p>
+          <div class="rodape-tabela">
+            <button type="button" class="btn btn-ghost-escuro" id="btnVerTodasSolic" hidden>Ver todas as solicitações</button>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ================= PÁGINA 2: FUNCIONÁRIOS ================= -->
+    <div id="paginaFuncionarios" hidden>
+      <header class="topbar">
+        <button class="menu-toggle" id="menuToggleFunc" aria-label="Abrir menu">☰</button>
+        <button class="btn btn-light btn-toggle-sidebar" type="button" title="Recolher/expandir menu" aria-label="Recolher/expandir menu"><span></span><span></span><span></span></button>
+        <div>
+          <h1>Funcionários</h1>
+          <p class="sub">Controle de funcionários ativos, desligados e equipamentos entregues</p>
+        </div>
+        <div class="actions">
+          <button class="btn btn-light" id="btnNovoFuncionario" type="button">+ Funcionário</button>
+
+          <div class="dropdown-wrap">
+            <button class="btn btn-light" id="btnToggleDropdownExport" type="button">Exportar lista ▼</button>
+            <div class="dropdown-menu" id="menuDropdownExport" hidden>
+              <button type="button" id="btnExportarFuncExcel">Excel (.xlsx)</button>
+              <button type="button" id="btnExportarFuncPdf">PDF (.pdf)</button>
+            </div>
+          </div>
+
+          <div class="dropdown-wrap">
+            <button class="btn btn-primary" id="btnToggleDropdownGeral" type="button">Relatório geral ▼</button>
+            <div class="dropdown-menu" id="menuDropdownGeral" hidden>
+              <button type="button" id="btnGeralExcel">Excel (.xlsx)</button>
+              <button type="button" id="btnGeralPdf">PDF (.pdf)</button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <section class="caixas-selecao-func">
+        <button type="button" class="caixa-func-card ativa" id="caixaAbaAtivos">
+          <div class="caixa-func-topo">
+            <span class="ponto-status online"></span>
+            <strong>Funcionários Ativos</strong>
+          </div>
+          <div class="caixa-func-qtd" id="qtdFuncAtivos">0</div>
+        </button>
+
+        <button type="button" class="caixa-func-card" id="caixaAbaDesligados">
+          <div class="caixa-func-topo">
+            <span class="ponto-status desligado"></span>
+            <strong>Funcionários Desligados</strong>
+          </div>
+          <div class="caixa-func-qtd" id="qtdFuncDesligados">0</div>
+        </button>
+      </section>
+
+      <section class="painel" id="painelListaAtivos">
+        <div class="painel-head">
+          <h2>Lista de Funcionários Ativos</h2>
+          <div class="botoes-linha">
+            <input type="search" id="buscaFuncionario" placeholder="Pesquisar funcionário ativo...">
+          </div>
+        </div>
+        <div class="tabela-wrap">
+          <table>
+            <thead>
+            <tr>
+              <th style="width: 70%;">Nome do Funcionário</th>
+              <th style="text-align: right; width: 30%;">Ações</th>
+            </tr>
+            </thead>
+            <tbody id="corpoFuncionarios"></tbody>
+          </table>
+          <p class="vazio" id="vazioFunc" hidden>Nenhum funcionário ativo cadastrado.</p>
+        </div>
+      </section>
+
+      <section class="painel" id="painelListaDesligados" hidden>
+        <div class="painel-head">
+          <h2>Lista de Funcionários Desligados</h2>
+          <div class="botoes-linha">
+            <input type="search" id="buscaDesligado" placeholder="Pesquisar funcionário desligado...">
+          </div>
+        </div>
+        <div class="tabela-wrap">
+          <table>
+            <thead>
+            <tr>
+              <th style="width: 70%;">Nome do Funcionário</th>
+              <th style="text-align: right; width: 30%;">Ações</th>
+            </tr>
+            </thead>
+            <tbody id="corpoDesligados"></tbody>
+          </table>
+          <p class="vazio" id="vazioDeslig" hidden>Nenhum funcionário desligado registrado.</p>
+        </div>
+      </section>
+    </div>
+
+    <!-- ================= PÁGINA 3: AUDITORIA EXCLUSIVA ================= -->
+    <div id="paginaAuditoria" hidden>
+      <header class="topbar">
+        <button class="menu-toggle" id="menuToggleAudit" aria-label="Abrir menu">☰</button>
+        <button class="btn btn-light btn-toggle-sidebar" type="button" title="Recolher/expandir menu" aria-label="Recolher/expandir menu"><span></span><span></span><span></span></button>
+        <div>
+          <h1>Auditoria do Sistema</h1>
+          <p class="sub">Histórico completo de registros, alterações e exportações</p>
+        </div>
+        <div class="actions">
+          <button class="btn btn-light" id="btnArquivarAudit">Arquivar antigos</button>
+          <div class="dropdown-wrap">
+            <button class="btn btn-primary" id="btnToggleDropdownAudit" type="button">Exportar auditoria ▼</button>
+            <div class="dropdown-menu" id="menuDropdownAudit" hidden>
+              <button type="button" id="btnAuditExcel">Excel (.xlsx)</button>
+              <button type="button" id="btnAuditPdf">PDF (.pdf)</button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <section class="painel" id="painelAuditoria">
+        <div class="painel-head">
+          <h2>Registros de Auditoria</h2>
+          <div class="botoes-linha">
+            <input type="search" id="buscaAudit" placeholder="Buscar no histórico de auditoria">
+          </div>
+        </div>
+
+        <div class="barra-filtros" style="gap: 8px; padding: 10px 16px; align-items: center; flex-wrap: wrap;">
+          <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+            <span style="font-size: 0.75rem; font-weight: 600; margin-right: 2px;">Categoria:</span>
+            <button type="button" class="btn btn-light ativo-filtro-audit" data-filtro-audit="todos" style="padding: 3px 8px; font-size: 0.74rem;">Todos</button>
+            <button type="button" class="btn btn-light" data-filtro-audit="novo" style="padding: 3px 8px; font-size: 0.74rem;">Novos</button>
+            <button type="button" class="btn btn-light" data-filtro-audit="edicao" style="padding: 3px 8px; font-size: 0.74rem;">Edições</button>
+            <button type="button" class="btn btn-light" data-filtro-audit="desligamento" style="padding: 3px 8px; font-size: 0.74rem;">Desligamentos</button>
+            <button type="button" class="btn btn-light" data-filtro-audit="remocao" style="padding: 3px 8px; font-size: 0.74rem;">Remoções</button>
+            <button type="button" class="btn btn-light" data-filtro-audit="exportacao" style="padding: 3px 8px; font-size: 0.74rem;">Exportações</button>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 6px; margin-left: auto; flex-wrap: wrap;">
+            <span style="font-size: 0.75rem; font-weight: 600;">Período:</span>
+            <label style="font-size: 0.73rem; font-weight: 400; gap: 3px; display: flex; align-items: center;">
+              De: <input type="date" id="filtroDataInicio" style="padding: 3px 6px; font-size: 0.74rem;">
+            </label>
+            <label style="font-size: 0.73rem; font-weight: 400; gap: 3px; display: flex; align-items: center;">
+              Até: <input type="date" id="filtroDataFim" style="padding: 3px 6px; font-size: 0.74rem;">
+            </label>
+            <button type="button" class="btn-link" id="limparFiltrosDataAudit" style="font-size: 0.72rem; padding: 2px 4px;" hidden>Limpar datas</button>
+          </div>
+        </div>
+
+        <p class="aviso-audit" id="avisoAudit" role="status" hidden></p>
+        <div class="tabela-wrap">
+          <table>
+            <thead>
+            <tr>
+              <th>Data e hora</th>
+              <th>Ação</th>
+              <th>Item</th>
+              <th>Obra</th>
+              <th>Detalhes</th>
+            </tr>
+            </thead>
+            <tbody id="corpoAudit"></tbody>
+          </table>
+          <p class="vazio" id="vazioAudit" hidden>Nenhum registro encontrado com este filtro.</p>
+          <p class="nota-audit" id="notaAudit" hidden></p>
+        </div>
+      </section>
+    </div>
+
+    <!-- ================= PÁGINA 4: RESUMO GERAL CONSOLIDADO ================= -->
+    <div id="paginaResumo" hidden>
+      <header class="topbar">
+        <button class="menu-toggle" id="menuToggleResumo" aria-label="Abrir menu">☰</button>
+        <button class="btn btn-light btn-toggle-sidebar" type="button" title="Recolher/expandir menu" aria-label="Recolher/expandir menu"><span></span><span></span><span></span></button>
+        <div>
+          <h1>Resumo Geral Consolidado</h1>
+          <p class="sub">Total de equipamentos, solicitações e estoque de todas as gaiolas</p>
+        </div>
+        <div class="actions">
+          <button class="btn btn-light" id="btnExportarResumoPdf">Exportar PDF Geral</button>
+          <button class="btn btn-primary" id="btnExportarResumoExcel">Exportar Excel Geral</button>
+        </div>
+      </header>
+
+      <section class="kpis" id="kpisResumo"></section>
+
+      <!-- Quadro de Obras -->
+      <section class="painel">
+        <div class="painel-head">
+          <h2>Quadro Geral de Obras</h2>
+          <div class="botoes-linha">
+            <input type="search" id="buscaResumoObra" placeholder="Buscar por obra ou engenheiro">
+          </div>
+        </div>
+        <div class="tabela-wrap">
+          <table>
+            <thead>
+            <tr>
+              <th>Obra</th>
+              <th>Engenheiro Responsável</th>
+              <th>Resp. Escritório</th>
+              <th style="text-align: center;">Total Equipamentos</th>
+              <th style="text-align: center;">Em Uso</th>
+              <th style="text-align: center;">Em Manutenção</th>
+              <th style="text-align: center;">Parados</th>
+              <th style="text-align: center;">Solicitações</th>
+            </tr>
+            </thead>
+            <tbody id="corpoResumoObras"></tbody>
+            <tfoot id="tfootResumoObras" class="tabela-totais"></tfoot>
+          </table>
+        </div>
+      </section>
+
+      <!-- Quadro Geral do Estoque por Gaiola -->
+      <section class="painel" style="margin-top: 20px;">
+        <div class="painel-head">
+          <h2>Quadro Geral do Estoque (Gaiolas 01 a 06)</h2>
+        </div>
+        <div class="tabela-wrap">
+          <table>
+            <thead>
+            <tr>
+              <th>Gaiola</th>
+              <th style="text-align: center;">Total de Itens</th>
+              <th style="text-align: center;">Setor TI</th>
+              <th style="text-align: center;">Setor ADM</th>
+              <th style="text-align: center;">Guardados</th>
+              <th style="text-align: center;">Em Uso</th>
+            </tr>
+            </thead>
+            <tbody id="corpoResumoEstoque"></tbody>
+            <tfoot id="tfootResumoEstoque" class="tabela-totais"></tfoot>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <!-- ================= PÁGINA 5: ESTOQUE E GAIOLAS ================= -->
+    <div id="paginaEstoque" hidden>
+      <header class="topbar">
+        <button class="menu-toggle" id="menuToggleEstoque" aria-label="Abrir menu">☰</button>
+        <button class="btn btn-light btn-toggle-sidebar" type="button" title="Recolher/expandir menu" aria-label="Recolher/expandir menu"><span></span><span></span><span></span></button>
+        <button type="button" class="btn btn-light" id="btnVoltarListaGaiolas" hidden style="margin-right: 6px; font-weight: 600;">← Voltar</button>
+        <div>
+          <h1 id="tituloGaiola">Estoque</h1>
+          <p class="sub" id="subGaiola">Gerenciamento das gaiolas de armazenamento</p>
+        </div>
+
+        <!-- Ações na lista de gaiolas (visão geral do estoque) -->
+        <div class="actions" id="acoesTopoListaGaiolas">
+          <button class="btn btn-light" id="btnExportarEstoqueGeralPdf" type="button">Exportar para PDF</button>
+          <button class="btn btn-primary" id="btnExportarEstoqueGeralExcel" type="button">Exportar para Excel</button>
+        </div>
+
+        <!-- Ações dentro de uma gaiola -->
+        <div class="actions" id="acoesTopoGaiola" hidden>
+          <button class="btn btn-light" id="btnNovoItemEstoque" type="button">+ Adicionar</button>
+          <button class="btn btn-light" id="btnRemoverItemEstoque" type="button" style="color: var(--vermelho-aveludado); border-color: var(--vermelho-borda-suave);">Remover</button>
+          <button class="btn btn-light" id="btnExportarEstoquePdf" type="button">Exportar para PDF</button>
+          <button class="btn btn-primary" id="btnExportarEstoqueExcel" type="button">Exportar para Excel</button>
+        </div>
+      </header>
+
+      <!-- Painel de Gaiolas em formato de Lista -->
+      <section class="painel painel-grade-gaiolas" id="painelGradeGaiolas">
+        <div class="painel-head">
+          <div>
+            <h2>Selecione uma Gaiola</h2>
+            <span class="sub">Gaiolas de 01 a 06 disponíveis</span>
+          </div>
+          <div class="botoes-linha">
+            <input type="search" id="buscaGaiolaLista" placeholder="Buscar gaiola...">
+          </div>
+        </div>
+        <div class="tabela-wrap">
+          <table>
+            <thead>
+            <tr>
+              <th>Gaiola</th>
+              <th style="text-align: center;">Total de Itens</th>
+              <th style="text-align: right;">Ação</th>
+            </tr>
+            </thead>
+            <tbody id="gradeGaiolas"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Painel de Itens da Gaiola Selecionada -->
+      <section class="painel" id="painelItensEstoque" hidden>
+        <div class="painel-head">
+          <h2 id="tituloTabelaGaiola">Itens da Gaiola</h2>
+          <div class="botoes-linha">
+            <input type="search" id="buscaEstoque" placeholder="Buscar por nome, tipo ou setor">
+          </div>
+        </div>
+        <div class="barra-filtros">
+          <label>Setor <select class="filtro-select" id="filtroSetorEstoque"><option value="">Todos</option><option value="TI">TI</option><option value="ADM">ADM</option></select></label>
+          <label>Status <select class="filtro-select" id="filtroStatusEstoque"><option value="">Todos</option><option value="Guardado">Guardado</option><option value="Em uso">Em uso</option></select></label>
+          <span class="contagem" id="contagemEstoque"></span>
+        </div>
+        <div class="tabela-wrap">
+          <table>
+            <thead>
+            <tr>
+              <th>Nome / Descrição</th>
+              <th>Tipo</th>
+              <th>Setor</th>
+              <th>Status</th>
+              <th>Data de Entrada / Uso</th>
+              <th style="text-align: right;">Ações</th>
+            </tr>
+            </thead>
+            <tbody id="corpoTabelaEstoque"></tbody>
+          </table>
+          <p class="vazio" id="vazioEstoque" hidden>Nenhum item cadastrado nesta gaiola. Clique em “+ Adicionar” para cadastrar.</p>
+        </div>
+      </section>
+    </div>
+
+    <!-- Modal genérico do sistema (substitui alert/confirm do navegador) -->
+    <dialog id="dlgAvisoSistema">
+      <form method="dialog" id="formAvisoSistema" novalidate style="padding: 20px; display: grid; gap: 12px; max-width: 400px;">
+        <h3 id="tituloAvisoSistema" style="margin: 0; font-size: 1.05rem; color: var(--texto-principal);">Aviso do Sistema</h3>
+        <p id="textoAvisoSistema" style="margin: 0; font-size: 0.85rem; line-height: 1.4; color: var(--texto-suave);"></p>
+        <div class="dlg-actions" style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 8px;">
+          <button type="button" class="btn btn-light" id="btnCancelarAviso" hidden>Cancelar</button>
+          <button type="submit" class="btn btn-primary" id="btnConfirmarAviso">OK</button>
+        </div>
+      </form>
+    </dialog>
+
+  </main>
+</div>
+
+<!-- ================= MODAIS ================= -->
+<dialog id="dlgSenhaRemoverFunc">
+  <form method="dialog" id="formSenhaRemoverFunc" novalidate>
+    <h3>Autorização de Exclusão</h3>
+    <p style="font-size: 0.82rem; color: var(--texto-suave);">Para remover este funcionário permanentemente, digite sua senha de acesso ao sistema:</p>
+    <label>Senha do Sistema <input type="password" id="inputSenhaRemoverFunc" autocomplete="current-password"></label>
+    <p class="login-erro" id="erroSenhaRemoverFunc" hidden></p>
+    <div class="dlg-actions">
+      <button type="button" class="btn btn-light" id="cancelaSenhaRemoverFunc">Cancelar</button>
+      <button type="submit" class="btn btn-perigo">Confirmar e Remover</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="dlgSenhaRemoverGaiola">
+  <form method="dialog" id="formSenhaRemoverGaiola" novalidate>
+    <h3>Remover</h3>
+    <p id="textoExcluirGaiola" style="font-size: 0.82rem; color: var(--texto-suave);"></p>
+    <label>Senha do Sistema <input type="password" id="inputSenhaRemoverGaiola" autocomplete="current-password"></label>
+    <p class="login-erro" id="erroSenhaRemoverGaiola" hidden></p>
+    <div class="dlg-actions">
+      <button type="button" class="btn btn-light" id="cancelaSenhaRemoverGaiola">Cancelar</button>
+      <button type="submit" class="btn btn-perigo">Confirmar e Esvaziar</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="dlgRemoverItemEstoque">
+  <form method="dialog" id="formRemoverItemEstoqueModal" novalidate>
+    <h3>Remover Item do Estoque</h3>
+    <div id="textoConfirmarRemoverItemEstoque" class="item-detalhe-bloco" style="margin-top: 4px;"></div>
+    <div class="caixa-aviso-conferencia">
+      <span class="icone-aviso-conferencia">!</span>
+      <span>Deseja realmente remover este item do estoque?</span>
+    </div>
+    <div class="dlg-actions">
+      <button type="button" class="btn btn-light" id="cancelaRemoverItemEstoque">Cancelar</button>
+      <button type="submit" class="btn btn-perigo">Sim, Remover</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="dlgDetalhesFunc">
+  <div class="modal-card-conteudo">
+    <div class="modal-cabecalho">
+      <h3 id="detalheFuncNome">Detalhes do Funcionário</h3>
+      <span class="badge online" id="detalheFuncBadgeStatus">Ativo</span>
+    </div>
+    <div class="detalhes-grid" id="detalheFuncCorpo"></div>
+    <div class="dlg-actions">
+      <button type="button" class="btn btn-light" id="fecharDetalhesFunc">Fechar</button>
+      <button type="button" class="btn btn-primary" id="btnConcluirManutencaoDetalhe" hidden>Concluir Manutenção</button>
+      <button type="button" class="btn btn-light" id="btnGerenciarReservaDetalhe" hidden>Gerenciar Reserva</button>
+      <button type="button" class="btn btn-light" id="btnEditarPeloDetalhe">Editar</button>
+      <button type="button" class="btn btn-light" id="btnDesligarPeloDetalhe" style="color: var(--vermelho-aveludado); border-color: var(--vermelho-borda-suave);">Desligar</button>
+      <button type="button" class="btn btn-perigo" id="btnRemoverAtivoPeloDetalhe">Remover Funcionário</button>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="dlgDetalhesDesligado">
+  <div class="modal-card-conteudo">
+    <div class="modal-cabecalho">
+      <h3 id="detalheDesligNome">Detalhes do Desligamento</h3>
+      <span class="badge offline">Desligado</span>
+    </div>
+    <div class="detalhes-grid" id="detalheDesligCorpo"></div>
+    <div class="dlg-actions">
+      <button type="button" class="btn btn-light" id="fecharDetalhesDeslig">Fechar</button>
+      <span id="rotuloBaixaConcluida" class="tag-baixa-concluida" hidden>✓ Devolução Concluída</span>
+      <button type="button" class="btn btn-primary" id="btnAcaoBaixaPeloDetalhe">Dar Baixa</button>
+      <button type="button" class="btn btn-primary" id="btnReativarFuncPeloDetalhe">Ativar Funcionário</button>
+      <button type="button" class="btn btn-perigo" id="btnRemoverDesligadoPeloDetalhe">Remover Funcionário</button>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="dlgSenhaReativar">
+  <form method="dialog" id="formSenhaReativar" novalidate>
+    <h3>Confirmar Ativação de Funcionário</h3>
+    <p style="font-size: 0.82rem; color: var(--texto-suave);">Por segurança, digite sua senha de acesso para reativar este colaborador:</p>
+    <label>Senha do Sistema <input type="password" id="inputSenhaReativar" autocomplete="current-password"></label>
+    <p class="login-erro" id="erroSenhaReativar" hidden></p>
+    <div class="dlg-actions">
+      <button type="button" class="btn btn-light" id="cancelaSenhaReativar">Cancelar</button>
+      <button type="submit" class="btn btn-primary">Confirmar e Ativar</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="dlgFuncionario">
+  <form method="dialog" id="formFuncionario" novalidate>
+    <h3 id="tituloDlgFunc">Cadastrar Funcionário</h3>
+    <label>Nome do Funcionário <input name="nome" id="campoNomeFuncionario" placeholder="Ex.: Carlos Silva"></label>
+
+    <div style="font-size: 0.82rem; font-weight: 600; color: var(--texto-principal); margin-top: 4px;">Equipamento(s) Entregue(s)</div>
+    <div id="containerEquipamentosForm" style="display: grid; gap: 10px;"></div>
+    <button type="button" class="btn btn-light" id="btnAddEquipForm" style="width: 100%; border-style: dashed;">+ Adicionar outro equipamento</button>
+
+    <div class="divisor-interno-form"></div>
+
+    <label>Termo de Responsabilidade Geral
+      <select name="termoStatus" id="selTermoStatus">
+        <option value="Pendente">Pendente (ainda não pegou o termo)</option>
+        <option value="Entregue">Entregue (ao funcionário)</option>
+      </select>
+    </label>
+    <label>Data de Entrega do Termo ao Funcionário <input type="date" name="dataTermoEntregue" id="dataTermoEntregue" disabled></label>
+    <label>Data de Devolução do Termo Assinado <input type="date" name="dataTermoDevolvido" id="dataTermoDevolvido" disabled></label>
+
+    <div class="caixa-aviso-conferencia" id="caixaAvisoConferencia" hidden>
+      <span class="icone-aviso-conferencia">ℹ</span>
+      <span>Verifique se todas as informações estão corretas.</span>
+    </div>
+
+    <div class="dlg-actions">
+      <button type="button" class="btn btn-light" id="cancelaFuncionario">Cancelar</button>
+      <button type="submit" class="btn btn-primary" id="btnSalvarFuncionario">Salvar Funcionário</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="dlgReserva">
+  <form method="dialog" id="formReserva" novalidate>
+    <h3>Equipamento em Manutenção / Reserva</h3>
+    <p class="pergunta-reserva" id="textoPerguntaReserva">O funcionário está com outro equipamento para trabalhar?</p>
+    <div class="opcoes-reserva">
+      <label class="radio-label"><input type="radio" name="temReserva" value="nao" checked> Não (Sem equipamento reserva)</label>
+      <label class="radio-label"><input type="radio" name="temReserva" value="sim"> Sim (Cadastrar equipamento reserva)</label>
+    </div>
+    <div id="camposEquipReserva" hidden>
+      <label>Tipo de Equipamento Reserva
+        <select name="tipoEquipamentoReserva" id="selTipoEquipReserva">
+          <option>Notebook</option>
+          <option>Mouse</option>
+          <option>Teclado</option>
+          <option>Celular</option>
+          <option>Suporte para notebook</option>
+        </select>
+      </label>
+      <label>Nome e Marca do Equipamento Reserva <input name="marcaEquipamentoReserva" id="inputMarcaEquipReserva" placeholder="Ex.: Notebook Lenovo Reserva 02"></label>
+      <label>Data de Entrega do Equipamento Reserva <input type="date" name="dataEntregaReserva" id="dataEntregaReserva"></label>
+
+      <div class="divisor-interno-form"></div>
+
+      <label>Termo de Responsabilidade (Equip. Reserva)
+        <select name="termoStatusReserva" id="selTermoStatusReserva">
+          <option value="Pendente">Pendente (ainda não pegou o termo)</option>
+          <option value="Entregue">Entregue (ao funcionário)</option>
+        </select>
+      </label>
+      <label>Data de Entrega do Termo (Reserva) <input type="date" name="dataTermoEntregueReserva" id="dataTermoEntregueReserva" disabled></label>
+      <label>Data de Devolução do Termo Assinado (Reserva) <input type="date" name="dataTermoDevolvidoReserva" id="dataTermoDevolvidoReserva" disabled></label>
+    </div>
+    <div class="dlg-actions">
+      <button type="button" class="btn btn-light" id="cancelaReserva">Cancelar</button>
+      <button type="submit" class="btn btn-primary">Confirmar e Salvar</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="dlgDesligar">
+  <form method="dialog" id="formDesligar" novalidate>
+    <h3>Desligar Funcionário</h3>
+    <div id="textoDesligarConfirm" style="font-size: 0.82rem; line-height: 1.45;"></div>
+    <label>Data do Desligamento <input type="date" name="dataDesligamento" id="dataDesligamento"></label>
+    <div id="blocoChecklistDesligamento" style="margin-top: 6px;"></div>
+    <div class="dlg-actions">
+      <button type="button" class="btn btn-light" id="cancelaDesligar">Cancelar</button>
+      <button type="submit" class="btn btn-perigo" id="btnConfirmarDesligar">Confirmar Desligamento</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="dlgBaixaDevolucao">
+  <form method="dialog" id="formBaixaDevolucao" novalidate>
+    <h3>Registrar Devolução de Equipamento</h3>
+    <div id="textoBaixaFuncionario" style="font-size: 0.82rem; line-height: 1.45;"></div>
+    <div id="checklistItensBaixa" style="margin: 10px 0; display: grid; gap: 6px;"></div>
+    <label>Data da Devolução <input type="date" name="dataBaixa" id="dataBaixa"></label>
+    <div class="dlg-actions">
+      <button type="button" class="btn btn-light" id="cancelaBaixaDevolucao">Cancelar</button>
+      <button type="submit" class="btn btn-primary">Salvar Devolução</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="dlgConfirmarExclusaoSolic">
+  <form method="dialog" id="formConfirmarExclusaoSolic" novalidate>
+    <h3>Remover Solicitação</h3>
+    <div id="textoConfirmarExclusaoSolic" class="item-detalhe-bloco" style="margin-top: 4px;"></div>
+    <div class="caixa-aviso-conferencia">
+      <span class="icone-aviso-conferencia">!</span>
+      <span>Deseja realmente remover esta solicitação de equipamento do sistema?</span>
+    </div>
+    <div class="dlg-actions">
+      <button type="button" class="btn btn-light" id="cancelaConfirmarExclusaoSolic">Cancelar</button>
+      <button type="submit" class="btn btn-perigo">Sim, Remover</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="dlgConfirmarExclusaoEquip">
+  <form method="dialog" id="formConfirmarExclusaoEquip" novalidate>
+    <h3>Remover Equipamento</h3>
+    <div id="textoConfirmarExclusaoEquip" class="item-detalhe-bloco" style="margin-top: 4px;"></div>
+    <div class="caixa-aviso-conferencia">
+      <span class="icone-aviso-conferencia">!</span>
+      <span>Deseja realmente remover este equipamento do inventário da obra?</span>
+    </div>
+    <div class="dlg-actions">
+      <button type="button" class="btn btn-light" id="cancelaConfirmarExclusaoEquip">Cancelar</button>
+      <button type="submit" class="btn btn-perigo">Sim, Remover</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="dlgEquip">
+  <form method="dialog" id="formEquip" novalidate>
+    <h3 id="tituloEquip">Novo equipamento</h3>
+    <label>Nome <input name="nome" placeholder="Ex.: Notebook Dell 03"></label>
+    <label>Tipo
+      <select name="tipo" id="selTipo">
+        <option>Notebook</option>
+        <option>Mouse</option>
+        <option>Teclado</option>
+        <option>Celular</option>
+        <option>Suporte para notebook</option>
+        <option>Monitor</option>
+        <option>CPU</option>
+        <option>Nobreak</option>
+        <option>Roteador</option>
+        <option>Câmera</option>
+        <option>Impressora</option>
+        <option>Rádio</option>
+        <option>Outro</option>
+      </select>
+    </label>
+    <label>Obra <select name="obra" id="selObra"></select></label>
+    <label>Responsável <select name="responsavel" id="selResponsavel"></select></label>
+    <label>Status
+      <select name="status" id="selStatus">
+        <option value="online">Em uso</option>
+        <option value="manutencao">Em manutenção</option>
+        <option value="parado">Equip. Parado</option>
+      </select>
+    </label>
+    <label id="grupoQtdEquip" hidden>Quantidade a cadastrar <input name="qtd" type="number" min="1" max="50" value="1"></label>
+    <div class="dlg-actions">
+      <button type="button" class="btn btn-light" id="cancelaEquip">Cancelar</button>
+      <button type="submit" class="btn btn-primary" id="btnSalvarEquip">Salvar equipamento</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="dlgSolic">
+  <form method="dialog" id="formSolic" novalidate>
+    <h3 id="tituloSolic">Solicitar equipamento</h3>
+    <label>Obra <select name="obra" id="selObraSolic"></select></label>
+    <label>Equipamento <input name="equipamento" placeholder="Ex.: Notebook para almoxarifado"></label>
+    <label>Tipo
+      <select name="tipo" id="selTipoSolic">
+        <option>Notebook</option>
+        <option>Mouse</option>
+        <option>Teclado</option>
+        <option>Celular</option>
+        <option>Suporte para notebook</option>
+        <option>Roteador</option>
+        <option>Câmera</option>
+        <option>Impressora</option>
+        <option>Rádio</option>
+        <option>Outro</option>
+      </select>
+    </label>
+    <label>Quantidade <input name="quantidade" type="number" min="1" value="1"></label>
+    <label>Solicitante <select name="solicitante" id="selSolicitante"></select></label>
+    <label>Urgência
+      <select name="urgencia"><option>Normal</option><option selected>Média</option><option>Alta</option></select>
+    </label>
+    <label>Motivo da solicitação <textarea name="motivo" rows="4" placeholder="Escreva aqui o motivo da solicitação"></textarea></label>
+    <div class="dlg-actions">
+      <button type="button" class="btn btn-light" id="cancelaSolic">Cancelar</button>
+      <button type="submit" class="btn btn-primary" id="btnSalvarSolic">Enviar solicitação</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="dlgObra">
+  <form method="dialog" id="formObra" novalidate>
+    <h3>Nova obra</h3>
+    <label>Nome da obra <input name="nome" placeholder="Ex.: Residencial Orla"></label>
+    <label>Engenheiro Responsável <input name="engenheiro" placeholder="Ex.: Eng. Romervan"></label>
+    <label>Responsável pelo Escritório <input name="admin" placeholder="Ex.: Ane"></label>
+    <label>Cidade <input name="cidade" placeholder="Ex.: Salvador - BA"></label>
+    <div class="dlg-actions">
+      <button type="button" class="btn btn-light" id="cancelaObra">Cancelar</button>
+      <button type="submit" class="btn btn-primary">Salvar obra</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="dlgRemoverObra">
+  <form method="dialog" id="formRemoverObra" novalidate>
+    <h3>Remover obra</h3>
+    <label>Obra <select name="obra" id="selObraRemover"></select></label>
+    <p class="aviso" id="avisoRemover"></p>
+    <div class="dlg-actions">
+      <button type="button" class="btn btn-light" id="cancelaRemoverObra">Cancelar</button>
+      <button type="submit" class="btn btn-perigo" id="btnConfirmaRemoverObra">Remover obra</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="dlgAlterarSenha">
+  <form method="dialog" id="formAlterarSenha" novalidate>
+    <h3>Alterar senha</h3>
+    <label>Senha atual <input type="password" name="atual" autocomplete="current-password"></label>
+    <label>Nova senha <input type="password" name="nova" autocomplete="new-password"></label>
+    <label>Confirmar nova senha <input type="password" name="confirma" autocomplete="new-password"></label>
+    <p class="login-erro" id="erroAlterar" role="alert" hidden></p>
+    <div class="dlg-actions">
+      <button type="button" class="btn btn-light" id="cancelaAlterar">Cancelar</button>
+      <button type="submit" class="btn btn-primary">Salvar nova senha</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="dlgCodigo">
+  <form method="dialog" id="formCodigo" novalidate>
+    <h3>Guarde seu código de recuperação</h3>
+    <p class="nota-codigo">Se esquecer a senha, este código é a única forma de voltar ao sistema. Anote em papel ou guarde fora deste computador. Ele aparece só desta vez.</p>
+    <p class="codigo-recuperacao" id="codigoRecuperacao"></p>
+    <div class="dlg-actions">
+      <button type="button" class="btn btn-light" id="copiarCodigo">Copiar</button>
+      <button type="submit" class="btn btn-primary">Anotei, continuar</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="dlgItemEstoque">
+  <form method="dialog" id="formItemEstoque" novalidate>
+    <h3 id="tituloDlgItemEstoque">Cadastrar Item no Estoque</h3>
+
+    <label>Setor
+      <select name="setor" id="selSetorItem">
+        <option value="TI">TI</option>
+        <option value="ADM">ADM</option>
+      </select>
+    </label>
+
+    <label id="rotuloTipoRegistro">Classificação <input type="text" id="inputClassificacaoAuto" value="Equipamento" disabled style="background: #f1f1ee; font-weight: 600;"></label>
+
+    <label>Tipo
+      <select name="tipo" id="selTipoItemEstoque" style="transition: all 0.3s ease; animation: fadeInSelect 0.4s ease;">
+        <option>Cabo</option>
+        <option>Câmera</option>
+        <option>Corrediça</option>
+        <option>CPU</option>
+        <option>Culer de CPU</option>
+        <option>DVR</option>
+        <option>Fonte de CPU</option>
+        <option>Gabinete</option>
+        <option>HD</option>
+        <option>Impressora</option>
+        <option>Luva</option>
+        <option>Maleta de Ferramentas</option>
+        <option>Monitor</option>
+        <option>Nobreak</option>
+        <option>Notebook</option>
+        <option>Rádio</option>
+        <option>Roteador</option>
+        <option>SSD</option>
+        <option>Starlink</option>
+        <option>Suporte de Monitor</option>
+        <option>Suporte p/ TinkPad</option>
+        <option>Teclado c/ fio</option>
+        <option>Teclado s/ fio</option>
+        <option>Toner</option>
+        <option>Tubo</option>
+        <option>Outro</option>
+      </select>
+    </label>
+
+    <label>Nome / Descrição <input name="nome" id="inputNomeItemEstoque" placeholder="Ex.: Notebook Dell i5 ou Cabo de Rede 10m"></label>
+
+    <label>Status
+      <select name="status" id="selStatusItemEstoque">
+        <option value="Guardado">Guardado</option>
+        <option value="Em uso">Em uso</option>
+      </select>
+    </label>
+
+    <div class="dlg-actions">
+      <button type="button" class="btn btn-light" id="cancelaItemEstoque">Cancelar</button>
+      <button type="submit" class="btn btn-primary">Salvar Item</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="script.js"></script>
+<script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("./sw.js")
+              .then((reg) => console.log("Service Worker registrado com sucesso!", reg))
+              .catch((err) => console.log("Falha ao registrar Service Worker:", err));
+    });
+  }
+</script>
+</body>
+</html>
