@@ -1662,9 +1662,23 @@ function abrirModalFuncionario(func = null) {
     $("#containerEquipamentosForm").innerHTML = "";
     $("#caixaAvisoConferencia").hidden = true;
 
+    // 1. Preenche o select de Local dinamicamente com as obras cadastradas
+    const selLocal = $("#selLocalFunc");
+    if (selLocal) {
+        const obrasOrdenadas = [...estado.obras].sort((a, b) => a.nome.localeCompare(b.nome));
+        selLocal.innerHTML = obrasOrdenadas.map(obra =>
+            `<option value="${escapar(obra.nome)}">${escapar(obra.nome)}</option>`
+        ).join("");
+    }
+
     if (func) {
         const f = $("#formFuncionario").elements;
         f.nome.value = func.nome;
+
+        // Preenche empresa e local salvos do funcionário
+        if (f.empresa) f.empresa.value = func.empresa || "Campbel Construções";
+        if (f.local && func.local) f.local.value = func.local;
+
         f.termoStatus.value = func.termoStatus || "Pendente";
         const pendente = (func.termoStatus || "Pendente") === "Pendente";
         $("#dataTermoEntregue").disabled = pendente;

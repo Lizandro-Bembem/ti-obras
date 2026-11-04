@@ -635,7 +635,24 @@
 <dialog id="dlgFuncionario">
   <form method="dialog" id="formFuncionario" novalidate>
     <h3 id="tituloDlgFunc">Cadastrar Funcionário</h3>
-    <label>Nome do Funcionário <input name="nome" id="campoNomeFuncionario" placeholder="Ex.: Carlos Silva"></label>
+
+    <label>Nome do Funcionário
+      <input name="nome" id="campoNomeFuncionario" placeholder="Ex.: Carlos Silva">
+    </label>
+
+    <label>Empresa
+      <select name="empresa" id="selEmpresaFunc">
+        <option value="Campbel Construções">Campbel Construções</option>
+        <option value="Construtora JN">Construtora JN</option>
+        <option value="Construtora JOTAELE">Construtora JOTAELE</option>
+      </select>
+    </label>
+
+    <label>Local
+      <select name="local" id="selLocalFunc">
+        <!-- Preenchido dinamicamente com as obras cadastradas -->
+      </select>
+    </label>
 
     <div style="font-size: 0.82rem; font-weight: 600; color: var(--texto-principal); margin-top: 4px;">Equipamento(s) Entregue(s)</div>
     <div id="containerEquipamentosForm" style="display: grid; gap: 10px;"></div>
