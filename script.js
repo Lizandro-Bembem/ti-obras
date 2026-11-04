@@ -1746,7 +1746,29 @@ function adicionarLinhaEquipamentoForm(tipoVal = "Notebook", marcaVal = "", data
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
       <label style="font-size: 0.75rem;">Tipo
         <select class="sel-tipo-equip-item">
-          <option>Notebook</option><option>Mouse</option><option>Teclado</option><option>Celular</option><option>Suporte para notebook</option>
+          <option>Cabo</option>
+          <option>Câmera</option>
+          <option>Carregador p/ Notebook</option>
+          <option>Carregador p/ Rádio</option>
+          <option>Carregador p/ Rádio Móvel</option>
+          <option>Celular</option>
+          <option>Corrediça</option>
+          <option>CPU</option>
+          <option>DVR</option>
+          <option>Impressora</option>
+          <option>Monitor</option>
+          <option>Mouse</option>
+          <option>Notebook</option>
+          <option>Rádio</option>
+          <option>Roteador</option>
+          <option>Starlink</option>
+          <option>Suporte de Monitor</option>
+          <option>Suporte p/ ThinkPad</option>
+          <option>Suporte para notebook</option>
+          <option>Teclado</option>
+          <option>Teclado c/ fio</option>
+          <option>Teclado s/ fio</option>
+          <option>Outro</option>
         </select>
       </label>
       <label style="font-size: 0.75rem;">Nome / Marca <input type="text" class="inp-marca-equip-item" placeholder="Ex.: Dell Inspiron" value="${escapar(marcaVal)}"></label>
