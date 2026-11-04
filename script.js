@@ -20,9 +20,10 @@ const GAIOLAS_PADRAO = [
 ];
 
 const TIPOS_ESTOQUE = [
-    "Cabo", "Câmera", "Corrediça", "CPU", "Culer de CPU", "DVR", "Fonte de CPU", "Gabinete",
+    "Cabo", "Câmera", "Carregador p/ Notebook", "Carregador p/ Rádio", "Carregador p/ Rádio Móvel",
+    "Corrediça", "CPU", "Culer de CPU", "DVR", "Fonte de CPU", "Gabinete", "HD",
     "Impressora", "Luva", "Maleta de Ferramentas", "Monitor", "Nobreak", "Notebook", "Rádio",
-    "Roteador intelbras", "Starlink", "Suporte de Monitor", "Suporte p/ TinkPad", "Teclado c/ fio",
+    "Roteador", "SSD", "Starlink", "Suporte de Monitor", "Suporte p/ TinkPad", "Teclado c/ fio",
     "Teclado s/ fio", "Toner", "Tubo", "Outro"
 ];
 
@@ -1662,7 +1663,7 @@ function abrirModalFuncionario(func = null) {
     $("#containerEquipamentosForm").innerHTML = "";
     $("#caixaAvisoConferencia").hidden = true;
 
-    // 1. Preenche o select de Local dinamicamente com as obras cadastradas
+    // Preenche o select de Local dinamicamente com as obras cadastradas
     const selLocal = $("#selLocalFunc");
     if (selLocal) {
         const obrasOrdenadas = [...estado.obras].sort((a, b) => a.nome.localeCompare(b.nome));
@@ -1675,7 +1676,6 @@ function abrirModalFuncionario(func = null) {
         const f = $("#formFuncionario").elements;
         f.nome.value = func.nome;
 
-        // Preenche empresa e local salvos do funcionário
         if (f.empresa) f.empresa.value = func.empresa || "Campbel Construções";
         if (f.local && func.local) f.local.value = func.local;
 
