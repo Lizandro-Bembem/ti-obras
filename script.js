@@ -1194,12 +1194,20 @@ function initFuncionariosEventos() {
 
         const equipamentos = [];
         document.querySelectorAll(".linha-equipamento-form").forEach((linha) => {
-            equipamentos.push({
-                tipo: linha.querySelector(".sel-tipo-equip-item").value,
-                marca: linha.querySelector(".inp-marca-equip-item").value.trim(),
-                dataEntrega: linha.querySelector(".inp-data-equip-item").value,
-                status: linha.querySelector(".sel-status-equip-item").value
-            });
+            const tipo = linha.querySelector(".sel-tipo-equip-item").value;
+            const marca = linha.querySelector(".inp-marca-equip-item").value.trim();
+            const dataEntrega = linha.querySelector(".inp-data-equip-item").value;
+            const status = linha.querySelector(".sel-status-equip-item").value;
+            const qtd = parseInt(linha.querySelector(".inp-qtd-equip-item").value, 10) || 1;
+
+            for (let i = 0; i < qtd; i++) {
+                equipamentos.push({
+                    tipo,
+                    marca: qtd > 1 ? `${marca} (${i + 1})` : marca,
+                    dataEntrega,
+                    status
+                });
+            }
         });
 
         if (!nome) { mostrarAviso("Preencha o nome do funcionário."); return; }
@@ -1732,7 +1740,7 @@ function abrirModalReserva(func) {
     $("#dlgReserva").showModal();
 }
 
-function adicionarLinhaEquipamentoForm(tipoVal = "Notebook", marcaVal = "", dataVal = dataLocal(), statusVal = "Em uso") {
+function adicionarLinhaEquipamentoForm(tipoVal = "Notebook", marcaVal = "", dataVal = dataLocal(), statusVal = "Em uso", qtdVal = 1) {
     const container = $("#containerEquipamentosForm");
     const div = document.createElement("div");
     div.className = "linha-equipamento-form";
@@ -1743,20 +1751,38 @@ function adicionarLinhaEquipamentoForm(tipoVal = "Notebook", marcaVal = "", data
       <strong style="font-size: 0.75rem; color: var(--texto-suave); text-transform: uppercase;">Equipamento</strong>
       <button type="button" class="btn-icone btn-remover-equip-linha" style="color: var(--vermelho-aveludado);" title="Remover item">✕ Remover</button>
     </div>
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+    <div style="display: grid; grid-template-columns: 2fr 2fr 70px; gap: 8px;">
       <label style="font-size: 0.75rem;">Tipo
         <select class="sel-tipo-equip-item">
-          <option>Celular</option>
+          <option>Atena (s) de Rádio</option>
+          <option>Bateria</option>
+          <option>Cabo</option>
           <option>Carregador p/ Notebook</option>
           <option>Carregador p/ Rádio</option>
+          <option>Carregador p/ Rádio Móvel</option>
+          <option>Celular</option>
+          <option>Gabinete</option>
+          <option>Impressora</option>
+          <option>Kit Teclado e Mouse</option>
+          <option>Mochila</option>
+          <option>Monitor</option>
           <option>Mouse</option>
           <option>Notebook</option>
+          <option>Par de Rádio - Locado</option>
           <option>Rádio</option>
+          <option>Rádio Fixo</option>
+          <option>Rádio Locado</option>
+          <option>Rádio Portátil</option>
+          <option>Rádio Transceptor</option>
+          <option>Régua de Energia</option>
           <option>Suporte para notebook</option>
           <option>Teclado</option>
+          <option>Televisão</option>
+          <option>Outro</option>
         </select>
       </label>
       <label style="font-size: 0.75rem;">Nome / Marca <input type="text" class="inp-marca-equip-item" placeholder="Ex.: Dell Inspiron" value="${escapar(marcaVal)}"></label>
+      <label style="font-size: 0.75rem;">1 <input type="number" class="inp-qtd-equip-item" min="1" max="50" value="${escapar(qtdVal)}" style="width: 100%; padding: 6px; text-align: center; font-weight: 600;"></label>
     </div>
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
       <label style="font-size: 0.75rem;">Data Entrega <input type="date" class="inp-data-equip-item" value="${escapar(dataVal)}"></label>
