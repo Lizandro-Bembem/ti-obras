@@ -819,3 +819,13 @@ body.autenticado .login { display: none; }
         transform: translateY(0);
     }
 }
+#dlgFuncionario {
+    width: 100%;
+    max-width: 650px; /* Aumenta a largura máxima da janela */
+    max-height: 90vh; /* Limita a altura a 90% da tela */
+    overflow-y: auto; /* Adiciona barra de rolagem vertical se o conteúdo for maior */
+    padding: 24px;
+    border-radius: 8px;
+    border: none;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
