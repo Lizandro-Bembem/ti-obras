@@ -21,9 +21,9 @@ const GAIOLAS_PADRAO = [
 
 const TIPOS_ESTOQUE = [
     "Cabo", "Câmera", "Carregador p/ Notebook", "Carregador p/ Rádio", "Carregador p/ Rádio Móvel",
-    "Corrediça", "CPU", "Culer de CPU", "DVR", "Fonte de CPU", "Gabinete", "HD",
+    "Corrediça", "CPU", "Cooler de CPU", "DVR", "Fonte de CPU", "Gabinete", "HD",
     "Impressora", "Luva", "Maleta de Ferramentas", "Monitor", "Nobreak", "Notebook", "Rádio",
-    "Roteador", "SSD", "Starlink", "Suporte de Monitor", "Suporte p/ TinkPad", "Teclado c/ fio",
+    "Roteador", "SSD", "Starlink", "Suporte de Monitor", "Suporte p/ ThinkPad", "Teclado c/ fio",
     "Teclado s/ fio", "Toner", "Tubo", "Outro"
 ];
 
@@ -208,6 +208,7 @@ const CHAVE_ACESSO = "ti-obras-acesso";
 const CHAVE_SESSAO = "ti-obras-sessao";
 let modoLogin = "entrar";
 
+/* Hash antigo — mantido apenas para validar senhas criadas em versões anteriores. */
 function hashTexto(str) {
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
@@ -217,10 +218,51 @@ function hashTexto(str) {
     return "h_" + Math.abs(hash).toString(36);
 }
 
+/* Hash forte SHA-256 com salt (WebCrypto). Em contexto sem suporte (http/file://), usa o hash antigo. */
+async function hashSenhaForte(senha, salt) {
+    if (window.crypto && crypto.subtle && crypto.subtle.digest) {
+        const dados = new TextEncoder().encode(`${salt}:${senha}`);
+        const resumo = await crypto.subtle.digest("SHA-256", dados);
+        return "s_" + [...new Uint8Array(resumo)].map((b) => b.toString(16).padStart(2, "0")).join("");
+    }
+    return hashTexto(senha);
+}
+
+function gerarSalt() {
+    if (window.crypto && crypto.getRandomValues) {
+        const bytes = crypto.getRandomValues(new Uint8Array(16));
+        return [...bytes].map((b) => b.toString(16).padStart(2, "0")).join("");
+    }
+    return String(Date.now());
+}
+
 function lerAcesso() {
     try { return JSON.parse(localStorage.getItem(CHAVE_ACESSO)); } catch (e) { return null; }
 }
 function gravarAcesso(obj) { localStorage.setItem(CHAVE_ACESSO, JSON.stringify(obj)); }
+
+/* Cria o registro de acesso com hash SHA-256 + salt. */
+async function criarAcesso(senha, codigo) {
+    const salt = gerarSalt();
+    const hash = await hashSenhaForte(senha, salt);
+    return { algo: "sha256", salt, hash, codigo };
+}
+
+/* Verifica a senha e migra automaticamente senhas antigas (hash fraco) para SHA-256. */
+async function verificarSenha(senha) {
+    const acesso = lerAcesso();
+    if (!acesso) return false;
+    if (acesso.algo === "sha256" && acesso.salt && acesso.hash) {
+        return (await hashSenhaForte(senha, acesso.salt)) === acesso.hash;
+    }
+    if (hashTexto(senha) === acesso.hash) {
+        try {
+            gravarAcesso(await criarAcesso(senha, acesso.codigo || ""));
+        } catch (e) { /* mantém o formato antigo se não for possível migrar */ }
+        return true;
+    }
+    return false;
+}
 
 function definirModoLogin(modo) {
     modoLogin = modo;
@@ -257,6 +299,120 @@ function gerarCodigoRecuperacao() {
     const letras = [...bytes].map((b) => alfabeto[b % alfabeto.length]).join("");
     return `${letras.slice(0, 4)}-${letras.slice(4, 8)}-${letras.slice(8, 12)}`;
 }
+
+/* ==========================================================================
+   PWA — INSTALAÇÃO NO CELULAR E ATUALIZAÇÕES
+   ========================================================================== */
+
+let promptInstalacao = null;
+const CHAVE_INSTALAR_DISPENSADO = "ti-obras-instalar-dispensado";
+
+window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    promptInstalacao = e;
+    atualizarInterfaceInstalar();
+});
+
+window.addEventListener("appinstalled", () => {
+    promptInstalacao = null;
+    atualizarInterfaceInstalar();
+    mostrarAviso("Aplicativo instalado com sucesso!");
+});
+
+function ehIOS() {
+    return /iphone|ipad|ipod/i.test(navigator.userAgent) ||
+        (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+}
+
+function estaRodandoInstalado() {
+    return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+}
+
+function instalacaoDisponivel() {
+    return !!promptInstalacao || ehIOS();
+}
+
+function atualizarInterfaceInstalar() {
+    const disponivel = instalacaoDisponivel() && !estaRodandoInstalado();
+    ["#btnInstalarApp", "#btnInstalarLogin"].forEach((s) => {
+        const el = $(s);
+        if (el) el.hidden = !disponivel;
+    });
+    const barra = $("#barraInstalar");
+    if (barra) {
+        const dispensado = sessionStorage.getItem(CHAVE_INSTALAR_DISPENSADO) === "1";
+        barra.hidden = !(promptInstalacao && !estaRodandoInstalado() && !dispensado);
+    }
+}
+
+function abrirModalInstalar() {
+    const dlg = $("#dlgInstalar");
+    if (!dlg) return;
+    const botao = $("#btnInstalarAgora");
+    const texto = $("#textoInstalar");
+
+    if (estaRodandoInstalado()) {
+        texto.textContent = "O aplicativo já está instalado neste dispositivo. Procure o ícone \"TI em Obras\" na tela inicial.";
+        botao.hidden = true;
+    } else if (promptInstalacao) {
+        texto.textContent = "Instale o TI em Obras no seu celular para abrir direto da tela inicial, em tela cheia e funcionando até sem internet.";
+        botao.hidden = false;
+    } else if (ehIOS()) {
+        texto.innerHTML = "No iPhone/iPad, siga os passos:<br><br>" +
+            "<strong>1.</strong> Toque no botão <strong>Compartilhar</strong> do Safari (quadrado com seta para cima).<br>" +
+            "<strong>2.</strong> Toque em <strong>Adicionar à Tela de Início</strong>.<br>" +
+            "<strong>3.</strong> Toque em <strong>Adicionar</strong>. Pronto!";
+        botao.hidden = true;
+    } else {
+        texto.textContent = "Abra este site no Chrome (no celular ou no computador) e use a opção \"Instalar aplicativo\" do menu do navegador.";
+        botao.hidden = true;
+    }
+    const sb = $("#sidebar");
+    if (sb) sb.classList.remove("aberta");
+    dlg.showModal();
+}
+
+function fecharBarraInstalar() {
+    sessionStorage.setItem(CHAVE_INSTALAR_DISPENSADO, "1");
+    atualizarInterfaceInstalar();
+}
+
+function instalarAgora() {
+    if (!promptInstalacao) { abrirModalInstalar(); return; }
+    promptInstalacao.prompt();
+    if (promptInstalacao.userChoice) {
+        promptInstalacao.userChoice.then(() => {
+            promptInstalacao = null;
+            atualizarInterfaceInstalar();
+        }).catch(() => {});
+    }
+    const dlg = $("#dlgInstalar");
+    if (dlg) dlg.close();
+}
+
+/* Service Worker: só registra em contexto seguro (https ou localhost) */
+function registrarServiceWorker() {
+    if (!("serviceWorker" in navigator)) return;
+    const seguro = window.isSecureContext || location.protocol === "https:" ||
+        ["localhost", "127.0.0.1"].includes(location.hostname);
+    if (!seguro) return;
+    window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./sw.js")
+            .then((reg) => {
+                reg.addEventListener("updatefound", () => {
+                    const nw = reg.installing;
+                    if (!nw) return;
+                    nw.addEventListener("statechange", () => {
+                        if (nw.state === "installed" && navigator.serviceWorker.controller) {
+                            mostrarAviso("Nova versão disponível. Feche e abra o aplicativo novamente para atualizar.", 6000);
+                        }
+                    });
+                });
+            })
+            .catch(() => { /* ambiente sem suporte: o sistema segue funcionando normalmente */ });
+    });
+}
+registrarServiceWorker();
 
 /* ==========================================================================
    INICIALIZAÇÃO DOS EVENTOS
@@ -409,12 +565,11 @@ document.addEventListener("DOMContentLoaded", () => {
         $("#dlgSenhaRemoverGaiola").close();
     });
 
-    $("#formSenhaRemoverGaiola").addEventListener("submit", (ev) => {
+    $("#formSenhaRemoverGaiola").addEventListener("submit", async (ev) => {
         ev.preventDefault();
         const senhaDigitada = $("#inputSenhaRemoverGaiola").value.trim();
-        const acesso = lerAcesso();
 
-        if (!acesso || hashTexto(senhaDigitada) !== acesso.hash) {
+        if (!(await verificarSenha(senhaDigitada))) {
             $("#erroSenhaRemoverGaiola").hidden = false;
             $("#erroSenhaRemoverGaiola").textContent = senhaDigitada ? "Senha incorreta. Ação não autorizada." : "Digite a senha do sistema.";
             return;
@@ -441,7 +596,7 @@ document.addEventListener("DOMContentLoaded", () => {
     $("#btnExportarEstoqueGeralPdf").addEventListener("click", () => exportarEstoqueGeralPdf());
 
     // ----- Login -----
-    $("#formLogin").addEventListener("submit", (ev) => {
+    $("#formLogin").addEventListener("submit", async (ev) => {
         ev.preventDefault();
         const senha = $("#loginSenha").value.trim();
         const confirma = $("#loginConfirma").value.trim();
@@ -452,7 +607,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (senha.length < 4) return falha("A senha deve ter no mínimo 4 caracteres.");
             if (senha !== confirma) return falha("As senhas não conferem.");
             const codigoNovo = gerarCodigoRecuperacao();
-            gravarAcesso({ hash: hashTexto(senha), codigo: codigoNovo });
+            gravarAcesso(await criarAcesso(senha, codigoNovo));
             $("#codigoRecuperacao").textContent = codigoNovo;
             $("#dlgCodigo").showModal();
             return;
@@ -463,14 +618,14 @@ document.addEventListener("DOMContentLoaded", () => {
             const acesso = lerAcesso();
             if (!acesso || cod !== acesso.codigo) return falha("Código de recuperação incorreto.");
             if (senha.length < 4 || senha !== confirma) return falha("Verifique os campos de nova senha.");
-            gravarAcesso({ hash: hashTexto(senha), codigo: acesso.codigo });
+            gravarAcesso(await criarAcesso(senha, acesso.codigo));
             entrarNoSistema();
             return;
         }
 
         const acesso = lerAcesso();
         if (!acesso) { definirModoLogin("criar"); return; }
-        if (hashTexto(senha) === acesso.hash) entrarNoSistema();
+        if (await verificarSenha(senha)) entrarNoSistema();
         else falha("Senha incorreta. Tente novamente.");
     });
 
@@ -517,6 +672,27 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     $("#buscaObraLista").addEventListener("input", renderGradeObras);
+
+    // ----- Navegação inferior (estilo aplicativo de celular) -----
+    document.querySelectorAll(".bottom-nav-item[data-tela]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+            const tela = btn.dataset.tela;
+            if (tela === "obras") painelGradeAberto = true;
+            if (tela === "estoque") painelGradeGaiolasAberto = true;
+            if (telaAtual === tela) window.scrollTo({ top: 0, behavior: "smooth" });
+            alternarTela(tela);
+        });
+    });
+    on("#btnTabMais", "click", () => $("#sidebar").classList.toggle("aberta"));
+
+    // ----- Instalação do aplicativo (PWA) -----
+    on("#btnInstalarApp", "click", abrirModalInstalar);
+    on("#btnInstalarLogin", "click", abrirModalInstalar);
+    on("#btnInstalarBarra", "click", instalarAgora);
+    on("#btnFecharBarraInstalar", "click", fecharBarraInstalar);
+    on("#btnFecharInstalar", "click", () => $("#dlgInstalar").close());
+    on("#btnInstalarAgora", "click", instalarAgora);
+    atualizarInterfaceInstalar();
 
     // ----- KPIs e filtros de equipamentos -----
     $("#kpis").addEventListener("click", (ev) => {
@@ -643,7 +819,7 @@ document.addEventListener("DOMContentLoaded", () => {
         $("#dlgAlterarSenha").showModal();
     });
     $("#cancelaAlterar").addEventListener("click", () => $("#dlgAlterarSenha").close());
-    $("#formAlterarSenha").addEventListener("submit", (ev) => {
+    $("#formAlterarSenha").addEventListener("submit", async (ev) => {
         ev.preventDefault();
         const el = $("#formAlterarSenha").elements;
         const atual = el.atual.value.trim();
@@ -651,12 +827,12 @@ document.addEventListener("DOMContentLoaded", () => {
         const conf = el.confirma.value.trim();
         const acesso = lerAcesso();
 
-        if (!acesso || hashTexto(atual) !== acesso.hash) { mostrarAviso("Senha atual incorreta."); return; }
+        if (!(await verificarSenha(atual))) { mostrarAviso("Senha atual incorreta."); return; }
         if (nova.length < 4 || nova !== conf) {
             mostrarAviso("A nova senha deve ter no mínimo 4 caracteres e ser idêntica nos dois campos.");
             return;
         }
-        gravarAcesso({ hash: hashTexto(nova), codigo: acesso.codigo });
+        gravarAcesso(await criarAcesso(nova, acesso ? acesso.codigo : ""));
         $("#dlgAlterarSenha").close();
         mostrarAviso("Senha alterada com sucesso.");
     });
@@ -1033,12 +1209,11 @@ function initFuncionariosEventos() {
         exclusaoFuncPendenteId = null;
         $("#dlgSenhaRemoverFunc").close();
     });
-    $("#formSenhaRemoverFunc").addEventListener("submit", (ev) => {
+    $("#formSenhaRemoverFunc").addEventListener("submit", async (ev) => {
         ev.preventDefault();
         const senhaDigitada = $("#inputSenhaRemoverFunc").value.trim();
-        const acesso = lerAcesso();
 
-        if (!acesso || hashTexto(senhaDigitada) !== acesso.hash) {
+        if (!(await verificarSenha(senhaDigitada))) {
             $("#erroSenhaRemoverFunc").hidden = false;
             $("#erroSenhaRemoverFunc").textContent = senhaDigitada ? "Senha incorreta. Ação não autorizada." : "Digite a senha do sistema.";
             return;
@@ -1088,12 +1263,11 @@ function initFuncionariosEventos() {
 
     // Reativar com senha
     $("#cancelaSenhaReativar").addEventListener("click", () => $("#dlgSenhaReativar").close());
-    $("#formSenhaReativar").addEventListener("submit", (ev) => {
+    $("#formSenhaReativar").addEventListener("submit", async (ev) => {
         ev.preventDefault();
         const senhaDigitada = $("#inputSenhaReativar").value.trim();
-        const acesso = lerAcesso();
 
-        if (!acesso || hashTexto(senhaDigitada) !== acesso.hash) {
+        if (!(await verificarSenha(senhaDigitada))) {
             $("#erroSenhaReativar").hidden = false;
             $("#erroSenhaReativar").textContent = senhaDigitada ? "Senha incorreta. Ação não autorizada." : "Digite a senha do sistema.";
             return;
@@ -1847,6 +2021,10 @@ function alternarTela(tela) {
     $("#btnMenuFuncionarios").classList.toggle("ativo", tela === "funcionarios");
     $("#btnMenuEstoque").classList.toggle("ativo", tela === "estoque");
     $("#btnMenuAuditoria").classList.toggle("ativo", tela === "auditoria");
+
+    document.querySelectorAll("#bottomNav .bottom-nav-item").forEach((b) => {
+        b.classList.toggle("ativo", b.dataset.tela === tela);
+    });
 
     $("#sidebar").classList.remove("aberta");
 
