@@ -8,18 +8,19 @@
     --texto-principal: #2d3036;
     --texto-suave: #6f7480;
 
-    --fundo-geral: #f7f7f5;
+    --fundo-geral: #f1f2f5;
     --fundo-card: #ffffff;
-    --fundo-hover: #f1f1ee;
-    --borda-suave: #e6e6e2;
+    --fundo-hover: #f4f5f7;
+    --borda-suave: #e4e6ea;
 
-    --vermelho-aveludado: #b84040;
-    --vermelho-hover: #a13434;
-    --vermelho-fundo-suave: #faeeee;
-    --vermelho-borda-suave: #edd4d4;
+    /* Vermelho do banco (Bradesco) */
+    --vermelho-aveludado: #CC092F;
+    --vermelho-hover: #A8022B;
+    --vermelho-fundo-suave: #FBEAEE;
+    --vermelho-borda-suave: #F3C6CF;
 
-    --raio: 5px;
-    --raio-card: 7px;
+    --raio: 8px;
+    --raio-card: 12px;
 }
 
 * { box-sizing: border-box; margin: 0; }
@@ -782,7 +783,6 @@ body.autenticado .login { display: none; }
 
     body.menu-recolhido #btnMenuResumo::before       { content: "📊"; opacity: 1; }
     body.menu-recolhido #btnMenuObras::before        { content: "🏗️"; opacity: 0.9; }
-    body.menu-recolhido #btnMenuEstoque::before      { content: "📦"; opacity: 0.8; }
     body.menu-recolhido #btnMenuFuncionarios::before { content: "👥"; opacity: 0.8; }
     body.menu-recolhido #btnMenuAuditoria::before    { content: "🛡️"; opacity: 0.7; }
     body.menu-recolhido #btnNovaObra::before         { content: "➕"; opacity: 0.85; }
@@ -819,4 +819,664 @@ body.autenticado .login { display: none; }
         opacity: 1;
         transform: translateY(0);
     }
+}
+#dlgFuncionario {
+    width: 100%;
+    max-width: 650px; /* Aumenta a largura máxima da janela */
+    max-height: 90vh; /* Limita a altura a 90% da tela */
+    overflow-y: auto; /* Adiciona barra de rolagem vertical se o conteúdo for maior */
+    padding: 24px;
+    border-radius: 8px;
+    border: none;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* ==========================================================================
+   TEMA APLICATIVO — ESTILO APP DE BANCO (VERMELHO #CC092F + BRANCO)
+   ========================================================================== */
+
+body { font-weight: 400; }
+
+/* ---------- Cabeçalho vermelho de cada página ---------- */
+.topbar {
+    background: linear-gradient(135deg, #D60E37 0%, #CC092F 55%, #A8022B 100%);
+    color: #ffffff;
+    padding: 14px 16px;
+    border-radius: 14px;
+    gap: 10px;
+    box-shadow: 0 4px 14px rgba(204, 9, 47, 0.25);
+}
+.topbar h1 { color: #ffffff; font-weight: 700; }
+.topbar .sub { color: rgba(255, 255, 255, 0.88); }
+.topbar .sub strong { color: #ffffff; }
+.topbar .btn-light {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.38);
+    color: #ffffff;
+}
+.topbar .btn-light:hover { background: rgba(255, 255, 255, 0.24); border-color: rgba(255, 255, 255, 0.65); }
+.topbar .btn-primary {
+    background: #ffffff;
+    border-color: #ffffff;
+    color: var(--vermelho-aveludado);
+    font-weight: 600;
+}
+.topbar .btn-primary:hover { background: #ffe9ee; border-color: #ffe9ee; }
+.topbar .btn-light.btn-perigo-suave {
+    background: rgba(179, 0, 45, 0.25);
+    border-color: rgba(255, 255, 255, 0.5);
+    color: #ffffff;
+}
+.topbar .btn-light.btn-perigo-suave:hover { background: rgba(143, 0, 36, 0.45); }
+.topbar .menu-toggle {
+    background: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.32);
+}
+
+/* ---------- Botões ---------- */
+.btn { border-radius: 8px; font-weight: 600; padding: 6px 12px; }
+.btn-primary { background: var(--vermelho-aveludado); border-color: var(--vermelho-aveludado); }
+.btn-primary:hover { background: var(--vermelho-hover); border-color: var(--vermelho-hover); }
+.btn-perigo { background: #B3002D; }
+.btn-perigo:hover { background: #8F0024; }
+
+/* ---------- Menu lateral branco (estilo app) ---------- */
+.sidebar {
+    background: #ffffff;
+    color: var(--texto-principal);
+    border-right: 1px solid var(--borda-suave);
+    padding: 16px 12px;
+}
+.brand { color: var(--texto-principal); }
+.menu-item-btn { color: var(--texto-suave); font-weight: 500; border-radius: 8px; }
+.menu-item-btn:hover { background: var(--fundo-hover); color: var(--texto-principal); }
+.menu-item-btn.ativo {
+    background: var(--vermelho-fundo-suave);
+    color: var(--vermelho-aveludado);
+    border-left: 3px solid var(--vermelho-aveludado);
+    font-weight: 600;
+}
+.divisor-sidebar { background: var(--borda-suave); }
+.info-backup-rodape { color: var(--texto-suave); }
+
+/* ---------- Painéis e tabelas ---------- */
+.painel {
+    border-radius: 14px;
+    border: 1px solid var(--borda-suave);
+    box-shadow: 0 1px 3px rgba(16, 24, 40, 0.05);
+    overflow: hidden;
+}
+.painel-head { padding: 13px 16px; background: #ffffff; }
+.painel-head h2 { font-weight: 700; }
+.painel-head .botoes-linha { flex: 1; justify-content: flex-end; }
+.painel-head input[type="search"] { width: min(320px, 100%); }
+th {
+    background: #F7F8FA;
+    color: var(--texto-suave);
+    text-transform: uppercase;
+    font-size: 0.7rem;
+    letter-spacing: 0.04em;
+}
+
+/* ---------- KPIs ---------- */
+.kpi { border-radius: 12px; padding: 13px 14px; border-left-width: 4px; }
+.kpi.total {
+    background: linear-gradient(135deg, #CC092F, #A8022B);
+    border-color: transparent;
+    border-left-color: #ffffff;
+    color: #ffffff;
+}
+.kpi.total .kpi-rotulo { color: rgba(255, 255, 255, 0.85); }
+.kpi.ok { border-left-color: #0BA05A; }
+.kpi.alerta { border-left-color: var(--vermelho-aveludado); }
+
+/* ---------- Faixas de aviso ---------- */
+.faixa-backup {
+    background: #ffffff;
+    color: var(--texto-principal);
+    border: 1px solid var(--vermelho-borda-suave);
+    border-left: 4px solid var(--vermelho-aveludado);
+    box-shadow: 0 1px 3px rgba(16, 24, 40, 0.05);
+}
+.faixa-backup .btn-primary { background: var(--vermelho-aveludado); border-color: var(--vermelho-aveludado); color: #ffffff; }
+.faixa-backup .btn-primary:hover { background: var(--vermelho-hover); border-color: var(--vermelho-hover); }
+.faixa-perigo { background: var(--vermelho-fundo-suave); border-left-color: #B3002D; }
+
+/* ---------- Cartões de funcionários ---------- */
+.caixa-func-card { border-radius: 12px; padding: 10px 16px; }
+.caixa-func-card.ativa {
+    border-color: var(--vermelho-aveludado);
+    box-shadow: 0 0 0 1px var(--vermelho-aveludado);
+}
+
+/* ---------- Tela de login estilo app de banco ---------- */
+.login {
+    background:
+            radial-gradient(1100px 520px at 85% -10%, rgba(255, 255, 255, 0.16), transparent 60%),
+            linear-gradient(160deg, #D60E37 0%, #CC092F 45%, #8F0024 100%);
+}
+.login-card { border-radius: 16px; padding: 26px 22px; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.28); }
+.login-card h1 { font-weight: 700; }
+.login input { padding: 10px 11px; border-radius: 8px; }
+.login input:focus {
+    border-color: var(--vermelho-aveludado);
+    box-shadow: 0 0 0 3px rgba(204, 9, 47, 0.16);
+}
+.link-troca { color: var(--vermelho-aveludado); font-weight: 600; }
+.link-instalar-login {
+    margin-top: 4px;
+    width: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background: var(--vermelho-fundo-suave);
+    border: 1px dashed var(--vermelho-aveludado);
+    border-radius: 8px;
+    color: var(--vermelho-aveludado);
+    font: inherit;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 8px;
+}
+.link-instalar-login:hover { background: #F8DDE3; }
+
+/* ---------- Modais ---------- */
+dialog { border-radius: 14px; }
+dialog h3 { font-weight: 700; }
+dialog input:focus, dialog select:focus, dialog textarea:focus {
+    border-color: var(--vermelho-aveludado);
+    box-shadow: 0 0 0 3px rgba(204, 9, 47, 0.14);
+}
+
+/* ---------- Toast ---------- */
+.toast { background: #25282e; border-left: 3px solid var(--vermelho-aveludado); border-radius: 10px; }
+
+/* ---------- Ícones ---------- */
+.icone-pequeno { width: 15px; height: 15px; flex: none; vertical-align: -2px; }
+.menu-item-btn { display: flex; align-items: center; gap: 7px; }
+
+/* ---------- Modal de instalação ---------- */
+.instalar-corpo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    text-align: center;
+    padding: 6px 0;
+}
+.instalar-icone-grande {
+    width: 84px;
+    height: 84px;
+    border-radius: 20px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+}
+.instalar-texto { font-size: 0.86rem; color: var(--texto-principal); line-height: 1.55; }
+
+/* ---------- Barra flutuante de instalação ---------- */
+.barra-instalar {
+    position: fixed;
+    left: auto;
+    right: 18px;
+    bottom: 18px;
+    z-index: 70;
+    background: #ffffff;
+    border: 1px solid var(--borda-suave);
+    border-radius: 14px;
+    box-shadow: 0 10px 28px rgba(16, 24, 40, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 12px;
+    max-width: 360px;
+}
+.barra-instalar-info { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.barra-instalar-icone { width: 38px; height: 38px; border-radius: 9px; flex: none; }
+.barra-instalar-info strong { display: block; font-size: 0.82rem; color: var(--texto-principal); }
+.barra-instalar-info span { display: block; font-size: 0.68rem; color: var(--texto-suave); }
+.barra-instalar-acoes { display: flex; align-items: center; gap: 4px; flex: none; }
+.btn-fechar-barra {
+    background: none;
+    border: 0;
+    color: var(--texto-suave);
+    cursor: pointer;
+    padding: 5px;
+    display: inline-flex;
+    border-radius: 6px;
+}
+.btn-fechar-barra:hover { background: var(--fundo-hover); color: var(--texto-principal); }
+
+/* ---------- Navegação inferior (celular) ---------- */
+.bottom-nav { display: none; }
+.bottom-nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    background: none;
+    border: 0;
+    padding: 7px 2px 6px;
+    color: #8A8F9C;
+    font: inherit;
+    font-size: 0.62rem;
+    font-weight: 500;
+    cursor: pointer;
+}
+.icone-nav { width: 22px; height: 22px; }
+.bottom-nav-item.ativo { color: var(--vermelho-aveludado); font-weight: 700; }
+.bottom-nav-item:active { opacity: 0.65; }
+
+/* A navegação inferior e a barra de instalação só aparecem dentro do app (após login) */
+body:not(.autenticado) .bottom-nav,
+body:not(.autenticado) .barra-instalar { display: none !important; }
+
+/* ---------- Celular ---------- */
+@media (max-width: 860px) {
+    .bottom-nav {
+        display: flex;
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: #ffffff;
+        border-top: 1px solid var(--borda-suave);
+        box-shadow: 0 -2px 12px rgba(16, 24, 40, 0.08);
+        z-index: 60;
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+    .main {
+        padding: 10px 10px calc(80px + env(safe-area-inset-bottom));
+        padding-top: max(10px, env(safe-area-inset-top));
+    }
+    .topbar { border-radius: 12px; padding: 12px; }
+    .topbar h1 { font-size: 1.08rem; }
+    .actions { width: 100%; margin-left: 0; }
+    .actions .btn { flex: 1 1 auto; justify-content: center; }
+    .dropdown-wrap { flex: 1 1 auto; }
+    .dropdown-wrap .btn { width: 100%; }
+    .sidebar { box-shadow: 10px 0 30px rgba(16, 24, 40, 0.2); }
+    .barra-instalar {
+        left: 10px;
+        right: 10px;
+        bottom: calc(74px + env(safe-area-inset-bottom));
+        max-width: none;
+    }
+    dialog { width: min(480px, 94vw); max-height: 90vh; }
+    .painel { border-radius: 12px; }
+    .kpis { gap: 8px; }
+    .kpi-valor { font-size: 1.25rem; }
+
+    /* Cabeçalho dos painéis empilhado: busca ocupa a linha inteira */
+    .painel-head { flex-direction: column; align-items: stretch; }
+    .painel-head .botoes-linha { width: 100%; }
+    .painel-head input[type="search"] { width: 100%; }
+
+    /* Tabelas: esconde colunas menos importantes no celular (as demais rolam) */
+    #painelGradeObras th:nth-child(3),
+    #painelGradeObras td:nth-child(3),
+    #painelEquipamentos th:nth-child(4),
+    #painelEquipamentos td:nth-child(4) { display: none; }
+
+    /* Rótulos da navegação inferior */
+    .bottom-nav-item { font-size: 0.6rem; }
+    .bottom-nav-item span {
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+}
+
+/* ---------- Desktop: sidebar recolhida continua legível ---------- */
+@media (min-width: 861px) {
+    body.menu-recolhido .sidebar { background: #ffffff; }
+    body.menu-recolhido .sidebar .menu-item-btn.ativo { background: var(--vermelho-fundo-suave); }
+}
+
+/* ==========================================================================
+   FORMULÁRIO DE EQUIPAMENTOS DO FUNCIONÁRIO (grade — igual ao layout anterior)
+   ========================================================================== */
+.grade-equip-item { display: grid; grid-template-columns: 2fr 2fr 70px; gap: 8px; }
+.campo-polegadas-item[hidden] { display: none; }
+
+/* ==========================================================================
+   VISUAL DE APLICATIVO DE BANCO — SOMENTE CELULAR
+   (o computador continua exatamente como estava)
+   ========================================================================== */
+@keyframes sheetUp {
+    from { transform: translateY(100%); opacity: 0.6; }
+    to   { transform: translateY(0);    opacity: 1; }
+}
+
+@media (max-width: 860px) {
+    body { background: #F2F3F7; -webkit-tap-highlight-color: transparent; }
+
+    /* ----- Cabeçalho vermelho de ponta a ponta, cantos inferiores arredondados ----- */
+    .main {
+        padding: 0 14px calc(104px + env(safe-area-inset-bottom));
+    }
+    .topbar {
+        margin: 0 -14px 16px;
+        padding: calc(env(safe-area-inset-top) + 18px) 18px 24px;
+        border-radius: 0 0 28px 28px;
+        background:
+                radial-gradient(420px 220px at 100% -20%, rgba(255, 255, 255, 0.22), transparent 60%),
+                linear-gradient(150deg, #E0113B 0%, #CC092F 50%, #8F0024 100%);
+        box-shadow: 0 10px 24px rgba(204, 9, 47, 0.28);
+    }
+    .topbar h1 { font-size: 1.3rem; letter-spacing: -0.02em; }
+    .topbar .sub { font-size: 0.8rem; opacity: 0.92; }
+    .topbar .btn {
+        min-height: 42px;
+        border-radius: 12px;
+        font-size: 0.82rem;
+    }
+    .topbar .btn-primary { box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15); }
+
+    /* ----- Indicadores: cartões que deslizam para o lado ----- */
+    .kpis {
+        display: flex;
+        overflow-x: auto;
+        gap: 10px;
+        margin: 0 -14px 16px;
+        padding: 2px 14px 8px;
+        scroll-snap-type: x mandatory;
+        scrollbar-width: none;
+    }
+    .kpis::-webkit-scrollbar { display: none; }
+    .kpi {
+        flex: 0 0 44%;
+        min-width: 130px;
+        scroll-snap-align: start;
+        border: 0;
+        border-radius: 18px;
+        padding: 15px 14px;
+        box-shadow: 0 6px 16px rgba(16, 24, 40, 0.08);
+    }
+    .kpi.total { box-shadow: 0 8px 18px rgba(204, 9, 47, 0.3); }
+    .kpi-valor { font-size: 1.5rem; font-weight: 700; }
+
+    /* ----- Painéis e listas como cartões flutuantes ----- */
+    .painel {
+        border: 0;
+        border-radius: 20px;
+        box-shadow: 0 6px 18px rgba(16, 24, 40, 0.07);
+        margin-bottom: 16px;
+    }
+    .painel-head { padding: 16px; }
+    .painel-head h2 { font-size: 1.02rem; }
+    input[type="search"] {
+        min-height: 44px;
+        font-size: 16px;
+        border-radius: 14px;
+        background: #F2F3F7;
+        border-color: transparent;
+        padding: 10px 14px;
+    }
+    td { padding: 14px 12px; font-size: 0.88rem; }
+    th { padding: 10px 12px; }
+    tbody tr:active { background: var(--vermelho-fundo-suave); }
+    .caixa-func-card {
+        border: 0;
+        border-radius: 18px;
+        padding: 14px 16px;
+        box-shadow: 0 6px 16px rgba(16, 24, 40, 0.07);
+    }
+    .caixa-func-card.ativa { box-shadow: 0 0 0 2px var(--vermelho-aveludado), 0 6px 16px rgba(204, 9, 47, 0.18); }
+
+    /* ----- Barra de navegação inferior flutuante ----- */
+    .bottom-nav {
+        left: 12px;
+        right: 12px;
+        bottom: calc(10px + env(safe-area-inset-bottom));
+        padding: 6px;
+        padding-bottom: 6px;
+        border: 0;
+        border-radius: 24px;
+        background: rgba(255, 255, 255, 0.97);
+        box-shadow: 0 10px 30px rgba(16, 24, 40, 0.22);
+        -webkit-backdrop-filter: blur(10px);
+        backdrop-filter: blur(10px);
+    }
+    .bottom-nav-item {
+        padding: 8px 2px 7px;
+        border-radius: 18px;
+        transition: background 0.2s ease, color 0.2s ease;
+    }
+    .bottom-nav-item.ativo { background: var(--vermelho-fundo-suave); }
+    .barra-instalar { bottom: calc(92px + env(safe-area-inset-bottom)); border-radius: 18px; }
+
+    /* ----- Menu lateral (Mais) ----- */
+    .sidebar { border-radius: 0 24px 24px 0; padding-top: calc(env(safe-area-inset-top) + 18px); }
+    .menu-item-btn { min-height: 44px; border-radius: 12px; }
+
+    /* ----- Janelas viram "gavetas" que sobem de baixo ----- */
+    dialog[open],
+    #dlgFuncionario[open] {
+        margin: auto 0 0 0;
+        width: 100%;
+        max-width: 100%;
+        max-height: 92vh;
+        border: 0;
+        border-radius: 26px 26px 0 0;
+        padding-bottom: env(safe-area-inset-bottom);
+        box-shadow: 0 -12px 40px rgba(16, 24, 40, 0.28);
+        animation: sheetUp 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    #dlgFuncionario[open] { padding: 0 0 env(safe-area-inset-bottom); }
+    dialog[open]::before {
+        content: "";
+        display: block;
+        width: 42px;
+        height: 5px;
+        border-radius: 5px;
+        background: #D5D8E0;
+        margin: 10px auto 0;
+    }
+    dialog::backdrop { background: rgba(16, 20, 30, 0.5); }
+    dialog form { padding: 14px 18px 20px; gap: 12px; }
+    dialog h3 { font-size: 1.15rem; }
+    dialog input,
+    dialog select,
+    dialog textarea {
+        font-size: 16px; /* evita o zoom automático do iPhone */
+        min-height: 46px;
+        padding: 10px 12px;
+        border-radius: 12px;
+        background: #F7F8FA;
+        border-color: #E6E8EE;
+    }
+    dialog input[type="checkbox"],
+    dialog input[type="radio"] { min-height: 0; }
+    dialog label { font-size: 0.8rem; }
+    .dlg-actions { gap: 10px; flex-wrap: nowrap; }
+    .dlg-actions .btn {
+        flex: 1;
+        min-height: 48px;
+        border-radius: 14px;
+        font-size: 0.92rem;
+        justify-content: center;
+    }
+
+    /* ----- Equipamentos do funcionário: campos maiores e organizados ----- */
+    .linha-equipamento-form { border-radius: 16px !important; background: #F7F8FA !important; border-color: #E6E8EE !important; }
+    .grade-equip-item { grid-template-columns: 1fr 84px; }
+    .grade-equip-item > label:first-child { grid-column: 1 / -1; }
+    .campo-qtd-item input { text-align: center; }
+
+    /* ----- Tela de entrada ----- */
+    .login-card { border-radius: 24px; padding: 30px 22px; }
+    .login input { min-height: 48px; font-size: 16px; border-radius: 12px; }
+    .login .btn-largo { min-height: 50px; border-radius: 14px; font-size: 1rem; }
+}
+
+@media (max-width: 860px) and (prefers-reduced-motion: reduce) {
+    dialog[open], #dlgFuncionario[open] { animation: none; }
+}
+
+
+/* ==========================================================================
+   PALETA CORPORATIVA DO CELULAR: branco sujo + preto + cinza (vermelho só como detalhe)
+   ========================================================================== */
+@media (max-width: 860px) {
+    body { background: #F3F2EF; }
+
+    /* Cabeçalho grafite em vez de vermelho */
+    .topbar {
+        background:
+                radial-gradient(420px 220px at 100% -20%, rgba(255, 255, 255, 0.10), transparent 60%),
+                linear-gradient(150deg, #2B2E34 0%, #1E2024 60%, #121316 100%);
+        box-shadow: 0 10px 24px rgba(18, 19, 22, 0.25);
+        border-bottom: 3px solid var(--vermelho-aveludado);
+    }
+    .topbar .btn-primary { background: #F3F2EF; border-color: #F3F2EF; color: #1E2024; }
+    .topbar .btn-primary:hover { background: #ffffff; border-color: #ffffff; }
+    .topbar .btn-light { background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.28); }
+
+    /* Botões principais pretos; vermelho só em ações de perigo */
+    .btn-primary { background: #1E2024; border-color: #1E2024; color: #ffffff; }
+    .btn-primary:hover, .btn-primary:active { background: #35383F; border-color: #35383F; }
+    .btn-light { background: #ffffff; color: #1E2024; border-color: #DAD9D4; }
+
+    /* Indicadores */
+    .kpi { background: #ffffff; }
+    .kpi.total { background: linear-gradient(135deg, #2B2E34, #1E2024); box-shadow: 0 8px 18px rgba(18, 19, 22, 0.28); border-left-color: var(--vermelho-aveludado); }
+    .kpi.ok { border-left-color: #8A8F9C; }
+
+    /* Painéis, tabelas e cartões em branco/cinza */
+    .painel { background: #ffffff; box-shadow: 0 4px 14px rgba(30, 32, 36, 0.06); }
+    .painel-head { background: #ffffff; }
+    th { background: #F3F2EF; color: #6B6F78; }
+    td { border-top-color: #ECEBE7; }
+    tbody tr:active { background: #F3F2EF; }
+    input[type="search"] { background: #F3F2EF; }
+    .caixa-func-card { background: #ffffff; }
+    .caixa-func-card.ativa { box-shadow: 0 0 0 2px #1E2024, 0 6px 16px rgba(30, 32, 36, 0.12); border-color: #1E2024; }
+    .linha-clicavel:hover .nome-destaque { color: #1E2024; }
+
+    /* Navegação inferior: ativo em preto, com pequeno traço vermelho */
+    .bottom-nav-item { color: #8A8F9C; position: relative; }
+    .bottom-nav-item.ativo { background: #F3F2EF; color: #1E2024; }
+    .bottom-nav-item.ativo::after {
+        content: ""; position: absolute; bottom: 3px; left: 50%; width: 16px; height: 3px;
+        margin-left: -8px; border-radius: 3px; background: var(--vermelho-aveludado);
+    }
+
+    /* Menu "Mais" (lateral): acima da barra inferior e rolável */
+    .sidebar { z-index: 80; overflow-y: auto; padding-bottom: calc(24px + env(safe-area-inset-bottom)); background: #ffffff; }
+    .menu-item-btn.ativo { background: #F3F2EF; color: #1E2024; border-left-color: var(--vermelho-aveludado); }
+    .sidebar.aberta { box-shadow: 0 0 0 100vmax rgba(16, 20, 30, 0.45), 10px 0 30px rgba(16, 24, 40, 0.2); }
+
+    /* Janelas */
+    dialog[open], #dlgFuncionario[open] { background: #ffffff; }
+    dialog input, dialog select, dialog textarea { background: #F3F2EF; border-color: #E2E1DC; }
+    dialog input:focus, dialog select:focus, dialog textarea:focus { border-color: #1E2024; box-shadow: 0 0 0 3px rgba(30, 32, 36, 0.12); }
+    .linha-equipamento-form { background: #F3F2EF !important; border-color: #E2E1DC !important; }
+    .toast { border-left-color: #8A8F9C; }
+
+    /* Tela de entrada */
+    .login { background: linear-gradient(160deg, #2B2E34 0%, #1E2024 55%, #121316 100%); }
+    .login input:focus { border-color: #1E2024; box-shadow: 0 0 0 3px rgba(30, 32, 36, 0.14); }
+    .link-troca { color: #1E2024; }
+    .link-instalar-login { background: #F3F2EF; border-color: #8A8F9C; color: #1E2024; }
+}
+
+
+/* ==========================================================================
+   CELULAR — VERMELHO REDUZIDO (fica só em alertas, perigo e um pequeno detalhe)
+   ========================================================================== */
+@media (max-width: 860px) {
+    .topbar { border-bottom: 0; }
+    .kpi.total { border-left-color: rgba(255, 255, 255, 0.35); }
+    .kpi.alerta { border-left-color: #8A8F9C; }
+    .kpi.alerta .kpi-valor { color: var(--vermelho-aveludado); }
+    .menu-item-btn.ativo { border-left-color: #1E2024; }
+    .bottom-nav-item.ativo::after { background: #1E2024; }
+    .link-troca:hover { color: #1E2024; }
+}
+
+
+/* ==========================================================================
+   CELULAR — TAMANHOS PROPORCIONAIS (mais compacto, como app)
+   ========================================================================== */
+@media (max-width: 860px) {
+    html { font-size: 14px; }
+
+    .main { padding: 0 12px calc(86px + env(safe-area-inset-bottom)); }
+    .topbar {
+        margin: 0 -12px 12px;
+        padding: calc(env(safe-area-inset-top) + 12px) 14px 16px;
+        border-radius: 0 0 20px 20px;
+        gap: 8px;
+    }
+    .topbar h1 { font-size: 1.1rem; }
+    .topbar .sub { font-size: 0.72rem; }
+    .topbar .btn { min-height: 34px; padding: 5px 10px; font-size: 0.74rem; border-radius: 10px; }
+    .topbar .menu-toggle { padding: 4px 8px; font-size: 0.95rem; }
+    .actions { gap: 6px; }
+
+    /* Indicadores menores */
+    .kpis { gap: 8px; margin: 0 -12px 12px; padding: 2px 12px 6px; }
+    .kpi { flex: 0 0 36%; min-width: 108px; padding: 10px 11px; border-radius: 14px; }
+    .kpi-valor { font-size: 1.2rem; }
+    .kpi-rotulo { font-size: 0.62rem; }
+
+    /* Painéis compactos */
+    .painel { border-radius: 16px; margin-bottom: 12px; }
+    .painel-head { padding: 11px 12px; gap: 8px; }
+    .painel-head h2 { font-size: 0.92rem; }
+    input[type="search"] { min-height: 38px; font-size: 16px; border-radius: 11px; padding: 7px 12px; }
+    .btn { min-height: 34px; padding: 5px 10px; font-size: 0.76rem; border-radius: 10px; }
+    .btn-icone { padding: 3px 7px; font-size: 0.74rem; }
+    .caixa-func-card { padding: 10px 12px; border-radius: 14px; }
+    .badge, .etiqueta-alerta-sutil { font-size: 0.66rem; }
+
+    /* Tabelas: mostram todas as colunas e rolam para os lados e para cima/baixo */
+    #painelGradeObras th:nth-child(3),
+    #painelGradeObras td:nth-child(3),
+    #painelEquipamentos th:nth-child(4),
+    #painelEquipamentos td:nth-child(4) { display: table-cell; }
+    .tabela-wrap {
+        overflow: auto;
+        max-height: 62vh;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+        scrollbar-color: #A9ADB6 #ECEBE7;
+    }
+    .tabela-wrap::-webkit-scrollbar { height: 7px; width: 7px; }
+    .tabela-wrap::-webkit-scrollbar-track { background: #ECEBE7; }
+    .tabela-wrap::-webkit-scrollbar-thumb { background: #A9ADB6; border-radius: 6px; }
+    table { min-width: 560px; }
+    th, td { white-space: nowrap; }
+    th { position: sticky; top: 0; z-index: 2; padding: 8px 10px; font-size: 0.64rem; }
+    td { padding: 9px 10px; font-size: 0.78rem; }
+
+    /* Barra inferior mais baixa */
+    .bottom-nav { left: 10px; right: 10px; bottom: calc(8px + env(safe-area-inset-bottom)); padding: 4px; border-radius: 20px; }
+    .bottom-nav-item { padding: 6px 2px 5px; border-radius: 15px; }
+    .icone-nav { width: 20px; height: 20px; }
+    .bottom-nav-item { font-size: 0.56rem; }
+    .barra-instalar { bottom: calc(76px + env(safe-area-inset-bottom)); padding: 8px 10px; }
+
+    /* Menu lateral */
+    .sidebar { width: 215px; }
+    .menu-item-btn { min-height: 38px; font-size: 0.8rem; }
+
+    /* Janelas (gavetas) mais compactas */
+    dialog[open], #dlgFuncionario[open] { border-radius: 20px 20px 0 0; max-height: 90vh; }
+    dialog form { padding: 10px 14px 16px; gap: 9px; }
+    dialog h3 { font-size: 1rem; }
+    dialog label { font-size: 0.74rem; }
+    dialog input, dialog select, dialog textarea { min-height: 40px; padding: 8px 10px; border-radius: 10px; }
+    .dlg-actions .btn { min-height: 42px; font-size: 0.84rem; border-radius: 12px; }
+    .linha-equipamento-form { padding: 8px !important; border-radius: 12px !important; gap: 6px !important; }
+
+    /* Entrada */
+    .login-card { padding: 22px 18px; border-radius: 20px; }
+    .login input { min-height: 42px; }
+    .login .btn-largo { min-height: 44px; font-size: 0.92rem; }
 }
