@@ -1,55 +1,38 @@
-const CACHE = "ti-obras-cache-v4";
-const ARQUIVOS = [
-    "./",
-    "./index.html",
-    "./script.js",
-    "./style.css",
-    "./manifest.json",
-    "./logo.jpg"
+const PREFIXO = 'sistema-financeiro-';
+const CACHE = PREFIXO + 'v11';
+const LOCAIS = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png', './icon-maskable-512.png', './apple-touch-icon.png', './fundo.jpg'];
+const EXTERNOS = [
+    'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js',
+    'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
+    'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js'
 ];
 
-self.addEventListener("install", (e) => {
+self.addEventListener('install', (e) => {
+    e.waitUntil(
+        caches.open(CACHE).then((c) => Promise.allSettled([...LOCAIS, ...EXTERNOS].map((a) => c.add(a))))
+    );
     self.skipWaiting();
-    // Cada arquivo é guardado separadamente: se um deles não existir,
-    // os outros continuam sendo guardados (com addAll, um arquivo ausente faria todos falharem).
-    e.waitUntil(
-        caches.open(CACHE).then((c) =>
-            Promise.all(ARQUIVOS.map((url) => c.add(new Request(url, { cache: "reload" })).catch(() => {})))
-        )
-    );
 });
 
-self.addEventListener("activate", (e) => {
+self.addEventListener('activate', (e) => {
     e.waitUntil(
-        caches.keys()
-            .then((nomes) => Promise.all(nomes.filter((n) => n !== CACHE).map((n) => caches.delete(n))))
-            .then(() => self.clients.claim())
+        caches.keys().then((keys) => Promise.all(keys.filter((k) => k.startsWith(PREFIXO) && k !== CACHE).map((k) => caches.delete(k))))
     );
+    self.clients.claim();
 });
 
-// Sempre tenta a internet primeiro; só usa o cache se estiver offline
-self.addEventListener("fetch", (e) => {
-    const req = e.request;
-    if (req.method !== "GET") return;
-    if (req.headers.has("range")) return;
-
-    const url = new URL(req.url);
-    if (url.protocol !== "http:" && url.protocol !== "https:") return;
-
+// Rede primeiro; se estiver offline, usa o cache (o Chrome exige um fetch handler para instalar o app)
+self.addEventListener('fetch', (e) => {
+    if (e.request.method !== 'GET' || !e.request.url.startsWith('http')) return;
     e.respondWith(
-        fetch(req, { cache: "no-cache" })
-            .then((resp) => {
-                // Só guarda respostas válidas (evita erro 404/500 e respostas parciais no cache)
-                if (resp && (resp.ok || resp.type === "opaque")) {
-                    const copia = resp.clone();
-                    caches.open(CACHE).then((c) => c.put(req, copia)).catch(() => {});
+        fetch(e.request)
+            .then((res) => {
+                if (res && (res.ok || res.type === 'opaque')) {
+                    const copia = res.clone();
+                    caches.open(CACHE).then((c) => c.put(e.request, copia));
                 }
-                return resp;
+                return res;
             })
-            .catch(() =>
-                caches.match(req, { ignoreSearch: true })
-                    .then((r) => r || (req.mode === "navigate" ? caches.match("./index.html") : null))
-                    .then((r) => r || Response.error())
-            )
+            .catch(() => caches.match(e.request).then((r) => r || caches.match('./index.html')))
     );
 });

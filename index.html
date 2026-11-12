@@ -3,1079 +3,971 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Monitoramento de TI em Obras</title>
-  <meta name="description" content="Sistema de monitoramento de equipamentos de TI, solicitações, funcionários e estoque das obras. Funciona offline.">
-  <link rel="icon" type="image/png" href="favicon.png">
+  <title>Sistema Financeiro - Família Bembem</title>
+  <meta name="description" content="Organização das finanças da família. Funciona offline e pode ser instalado no celular.">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="data:,">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <meta name="theme-color" content="#5d4037">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="TI em Obras">
+  <meta name="apple-mobile-web-app-title" content="Financeiro">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#1E2024">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{--m50:#fdfbf7;--m100:#f4ede2;--m200:#e6d5c3;--m300:#c9ad94;--m500:#8d6e63;--m600:#795548;--m700:#6d4c41;--m800:#5d4037;--m900:#3e2723;--g:#047857;--r:#be123c;--a:#b45309;--raio:10px}
+    *{box-sizing:border-box;margin:0}
+    body{font-family:Inter,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--m50);color:var(--m900);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+    [hidden]{display:none!important}
+    button{font:inherit;cursor:pointer}
+    .ic{width:20px;height:20px;flex:none}
+    .sm{padding:4px 9px!important;font-size:.74rem!important}
+    .mt{margin-top:10px}
+
+    /* ---- Login ---- */
+    #login{position:fixed;inset:0;z-index:80;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:24px;text-align:center;color:#fff;overflow-y:auto;background:linear-gradient(rgba(62,39,35,.55),rgba(62,39,35,.82)),url(fundo.jpg) center/cover no-repeat,#3e2723}
+    .login-in{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;max-width:420px;gap:10px}
+    #login h1{font-family:"Playfair Display",serif;font-size:2rem;line-height:1.2;text-shadow:0 2px 8px rgba(0,0,0,.4)}
+    #login .lead{color:var(--m100);font-size:.85rem;margin-bottom:14px}
+    #login h3{font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--m100)}
+    /* Lista de usuários: rola com a roda do mouse (ou dedo), sem exibir barras de rolagem */
+    #userList{width:100%;display:grid;gap:10px;max-height:240px;overflow-y:auto;overflow-x:hidden;margin-top:6px;padding:4px 6px;scrollbar-width:none;-ms-overflow-style:none;overscroll-behavior:contain}
+    #userList::-webkit-scrollbar{display:none;width:0;height:0}
+    .user-btn{display:flex;align-items:center;justify-content:space-between;width:100%;padding:14px 16px;border:0;border-radius:16px;background:rgba(255,255,255,.92);color:var(--m900);font-weight:600;font-size:1rem;box-shadow:0 4px 12px rgba(0,0,0,.2);transition:.15s}
+    .user-btn:hover{background:#fff;transform:scale(1.02)}
+    .user-btn i{display:inline-block;width:10px;height:10px;border-radius:50%;background:#10b981;margin-right:10px}
+    .glass{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:12px;border-radius:16px;border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.18);color:#fff;font-weight:500;font-size:.85rem;margin-top:6px}
+    .glass:hover{background:rgba(255,255,255,.3)}
+    #login footer{font-size:.78rem;font-weight:600;opacity:.9;padding:14px 0}
+    body.auth #login{display:none}
+    body:not(.auth) .app,body:not(.auth) .bnav,body:not(.auth) .barra{display:none!important}
+
+    /* ---- Layout ---- */
+    .app{display:grid;grid-template-columns:260px 1fr;height:100vh;transition:grid-template-columns .3s}
+    .sidebar{background:#fff;border-right:1px solid var(--m200);padding:16px 12px;display:flex;flex-direction:column;gap:12px;overflow-y:auto;overflow-x:hidden;transition:.25s}
+    .brand{display:flex;align-items:center;gap:10px;font-weight:700;color:var(--m800);padding:0 4px 4px}
+    .brand img{width:32px;height:32px;border-radius:8px}
+    .usercard{display:flex;align-items:center;gap:10px;background:var(--m100);border-radius:12px;padding:10px}
+    .av{width:38px;height:38px;border-radius:50%;background:var(--m800);color:#fff;display:grid;place-items:center;font-weight:700;flex:none}
+    .usercard b{display:block;font-size:.85rem;color:var(--m900)}
+    .usercard small{color:var(--g);font-size:.7rem;font-weight:600;display:block}
+    button.usercard{width:100%;border:1px solid transparent;text-align:left;color:inherit;cursor:pointer;transition:.15s}
+    button.usercard:hover{background:var(--m200);border-color:var(--m300)}
+    .usercard .tx{flex:1;min-width:0}
+    .ucwrap .menu{left:0;right:0;min-width:0}
+    #btnSair{color:var(--r);font-weight:700}
+    body.menu-recolhido .ucwrap .menu button{white-space:normal;font-size:.7rem;text-align:center}
+    .erro{background:#ffe4e6;border-left:3px solid var(--r);color:#9f1239;font-size:.78rem;padding:7px 10px;border-radius:8px}
+    .nbtn{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:9px 10px;border:0;border-left:3px solid transparent;border-radius:8px;background:none;color:var(--m600);font-weight:500;font-size:.84rem;transition:.15s}
+    .nbtn:hover{background:var(--m50);color:var(--m900)}
+    .nbtn.ativo{background:var(--m100);color:var(--m800);border-left-color:var(--m800);font-weight:700}
+    .div{height:1px;background:var(--m200);margin:6px 4px}
+    .foot{margin-top:auto;text-align:center;font-size:.7rem;color:var(--m500)}
+    .main{overflow-y:auto;padding:20px 24px 36px;min-width:0}
+    body.menu-recolhido .app{grid-template-columns:72px 1fr}
+    body.menu-recolhido .tx{display:none}
+    body.menu-recolhido .nbtn,body.menu-recolhido .brand,body.menu-recolhido .usercard{justify-content:center}
+    body.menu-recolhido .nbtn{border-left:0}
+
+    /* ---- Topbar ---- */
+    .topbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:18px;padding:14px 16px;border-radius:14px;color:#fff;background:linear-gradient(135deg,#6d4c41 0%,#5d4037 55%,#3e2723 100%);box-shadow:0 4px 14px rgba(93,64,55,.28)}
+    .tb-tit h1{font-family:"Playfair Display",serif;font-size:1.3rem;font-weight:700}
+    .tb-tit p{font-size:.78rem;opacity:.88}
+    .tb-btn{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.32);color:#fff;border-radius:8px;padding:5px 9px;font-weight:600;font-size:.78rem}
+    .tb-btn:hover{background:rgba(255,255,255,.26)}
+    #colapsar{width:32px;height:32px;display:flex;flex-direction:column;justify-content:center;gap:4px;padding:6px 8px}
+    #colapsar span{display:block;width:16px;height:2px;background:#fff}
+    #menuToggle{display:none}
+    .actions{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:7px 12px;border-radius:8px;border:1px solid transparent;font-weight:600;font-size:.78rem;transition:.15s}
+    .btn:active{transform:translateY(1px)}
+    .btn.prim{background:var(--m800);color:#fff;border-color:var(--m800)}.btn.prim:hover{background:var(--m900)}
+    .btn.lt{background:#fff;color:var(--m800);border-color:var(--m200)}.btn.lt:hover{background:var(--m100)}
+    .btn.dng{background:var(--r);color:#fff}.btn.dng:hover{background:#9f1239}
+    .topbar .btn.prim{background:#fff;color:var(--m800);border-color:#fff}
+    .topbar .btn.prim:hover{background:var(--m100)}
+    .topbar .btn.lt{background:rgba(255,255,255,.14);color:#fff;border-color:rgba(255,255,255,.38)}
+    .topbar .btn.lt:hover{background:rgba(255,255,255,.26)}
+    .dd{position:relative}
+    .menu{position:absolute;right:0;top:100%;margin-top:4px;background:#fff;border:1px solid var(--m200);border-radius:10px;box-shadow:0 8px 20px rgba(0,0,0,.14);min-width:170px;padding:4px;z-index:60;display:grid}
+    .menu button{background:none;border:0;text-align:left;padding:8px 10px;border-radius:6px;font-size:.78rem;color:var(--m900)}
+    .menu button:hover{background:var(--m100)}
+    .menu.notif{width:290px;max-height:300px;overflow-y:auto;padding:10px;gap:8px;color:var(--m900)}
+    .menu.notif h4{font-size:.7rem;text-transform:uppercase;color:var(--m600)}
+    .nt{padding:8px;border-radius:8px;font-size:.76rem;background:#fffbeb;border:1px solid #fde68a;color:#78350f}
+    .nt.at{background:#fef3c7;border-color:#fcd34d}
+    .bell{position:relative;padding:7px 9px}
+    #badge{position:absolute;top:-4px;right:-4px;background:#d97706;color:#fff;font-size:.62rem;min-width:16px;height:16px;border-radius:99px;display:grid;place-items:center;font-weight:700}
+
+    /* ---- Conteúdo ---- */
+    .tab{display:grid;gap:16px}
+    .card{background:#fff;border:1px solid var(--m200);border-radius:14px;padding:18px;box-shadow:0 1px 3px rgba(62,39,35,.06)}
+    .lbl{font-size:.7rem;font-weight:700;text-transform:uppercase;color:var(--m600);letter-spacing:.04em}
+    .big{font-size:1.9rem;font-weight:800}
+    .row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+    .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}
+    .kpi{background:#fff;border:1px solid var(--m200);border-left:4px solid var(--m500);border-radius:12px;padding:14px}
+    .kpi b{display:block;font-size:1.3rem;margin-top:3px}
+    .kpi.g{border-left-color:var(--g)}.kpi.g b{color:var(--g)}
+    .kpi.r{border-left-color:var(--r)}.kpi.r b{color:var(--r)}
+    .kpi.a{border-left-color:var(--a)}.kpi.a b{color:var(--a)}
+    .tw{background:#fff;border:1px solid var(--m200);border-radius:14px;overflow-x:auto;box-shadow:0 1px 3px rgba(62,39,35,.06)}
+    table{width:100%;border-collapse:collapse;min-width:520px}
+    th{text-align:left;padding:11px 14px;background:var(--m100);color:var(--m800);font-size:.68rem;text-transform:uppercase;letter-spacing:.04em}
+    td{padding:11px 14px;border-top:1px solid var(--m100);font-size:.84rem;vertical-align:middle}
+    tbody tr:hover{background:var(--m50)}
+    tr.atr{background:#fef3c7}tr.atr:hover{background:#fde68a}
+    td small{display:block;color:var(--m500);font-size:.72rem}
+    td.r,th.r{text-align:right}
+    .vazio{padding:26px;text-align:center;color:var(--m500)}
+    .tag{display:inline-block;padding:2px 9px;border-radius:99px;font-size:.72rem;font-weight:700}
+    .tag.ok{background:#d1fae5;color:#065f46}.tag.at{background:#fcd34d;color:#78350f}
+    .ib{background:none;border:0;color:var(--r);padding:4px;border-radius:6px}.ib:hover{background:#ffe4e6}.ib.ed{color:var(--m700)}.ib.ed:hover{background:var(--m100)}
+    .lk{background:none;border:0;color:var(--m600);text-decoration:underline;font-size:.74rem;margin-left:6px}
+    .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
+    .cc{background:linear-gradient(135deg,var(--c1,#6d4c41),var(--c2,#3e2723));color:#fff;border-radius:16px;padding:18px;height:170px;display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 6px 16px rgba(62,39,35,.25)}
+    .cc small{color:rgba(255,255,255,.75);text-transform:uppercase;letter-spacing:.06em;font-size:.68rem}
+    .cc .ib{color:rgba(255,255,255,.85)}.cc .ib:hover{background:rgba(255,255,255,.15)}
+    .cc .num{font-family:ui-monospace,monospace;font-size:1.1rem;letter-spacing:.16em}
+    .cc.claro{color:#2b1b17}.cc.claro small{color:rgba(43,27,23,.72)}.cc.claro .ib{color:rgba(43,27,23,.75)}.cc.claro .ib:hover{background:rgba(0,0,0,.08)}
+    .cc-prev{height:34px;border-radius:10px;background:linear-gradient(135deg,var(--c1,#6d4c41),var(--c2,#3e2723));border:1px solid var(--m200)}
+    .urow{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--m50);border:1px solid var(--m100);border-radius:12px}
+
+    /* ---- Modais ---- */
+    dialog{margin:auto;border:1px solid var(--m200);border-radius:16px;padding:0;width:min(440px,94vw);max-height:92vh;color:var(--m900);box-shadow:0 14px 34px rgba(62,39,35,.25)}
+    dialog::backdrop{background:rgba(62,39,35,.5);backdrop-filter:blur(2px)}
+    dialog form,.dbody{padding:20px;display:grid;gap:12px}
+    dialog h3{font-family:"Playfair Display",serif;font-size:1.1rem}
+    dialog label{display:grid;gap:4px;font-size:.7rem;font-weight:700;text-transform:uppercase;color:var(--m700)}
+    dialog input,dialog select{font:inherit;font-size:.85rem;font-weight:400;text-transform:none;padding:8px 10px;border:1px solid var(--m200);border-radius:8px;background:#fff;color:var(--m900);width:100%}
+    dialog input:focus,dialog select:focus,.salbox input:focus{outline:none;border-color:var(--m700);box-shadow:0 0 0 3px rgba(109,76,65,.18)}
+    dialog input:disabled,dialog select:disabled{background:var(--m100);color:var(--m500)}
+    .pw{position:relative;display:block}
+    dialog .pw input{padding-right:86px}
+    .pw-btn{position:absolute;right:5px;top:50%;transform:translateY(-50%);border:0;background:var(--m100);color:var(--m800);font:inherit;font-size:.72rem;font-weight:600;text-transform:none;letter-spacing:0;padding:4px 10px;border-radius:6px}
+    .pw-btn:hover{background:var(--m200)}
+    .grid2{display:grid;gap:12px}
+    .dact{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-top:4px}
+    .seg{display:flex;gap:8px}
+    .seg button{flex:1;padding:8px;border-radius:8px;border:1px solid var(--m200);background:#fff;color:var(--m800);font-weight:700;font-size:.78rem}
+    .seg button.on{background:var(--m800);color:#fff;border-color:var(--m800)}
+    .prev{font-size:.78rem;background:var(--m50);padding:8px;border-radius:8px;color:var(--m700);font-weight:500}
+    #inputSalario{padding:8px 10px;border:1px solid var(--m200);border-radius:8px;width:170px;font:inherit}
+    .inst{display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center}
+    .inst img{width:84px;height:84px;border-radius:20px;box-shadow:0 6px 18px rgba(0,0,0,.2)}
+    .inst p{font-size:.86rem;line-height:1.6}
+
+    /* ---- Toast / Instalação / Nav inferior ---- */
+    .toast{position:fixed;right:18px;bottom:18px;background:var(--m900);color:#fff;border-left:3px solid var(--m300);padding:9px 15px;border-radius:10px;font-size:.82rem;box-shadow:0 6px 16px rgba(0,0,0,.2);transform:translateY(12px);opacity:0;pointer-events:none;transition:.2s;z-index:120}
+    .toast.show{transform:none;opacity:1}
+    .barra{position:fixed;right:18px;bottom:18px;z-index:70;background:#fff;border:1px solid var(--m200);border-radius:14px;box-shadow:0 10px 28px rgba(62,39,35,.25);display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;max-width:360px}
+    .barra .inf{display:flex;align-items:center;gap:10px;min-width:0}
+    .barra img{width:38px;height:38px;border-radius:9px}
+    .barra strong{display:block;font-size:.82rem}.barra span{display:block;font-size:.68rem;color:var(--m500)}
+    .barra .x{background:none;border:0;color:var(--m500);padding:5px;border-radius:6px}
+    .lnk-inst{display:inline-flex;align-items:center;justify-content:center;gap:6px;width:100%;margin-top:4px;padding:10px;border-radius:12px;background:rgba(255,255,255,.18);border:1px dashed rgba(255,255,255,.7);color:#fff;font-size:.8rem;font-weight:600}
+    .bnav{display:none}
+    .bi{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:0;padding:7px 2px 6px;color:#9a8a82;font-size:.62rem;font-weight:500}
+    .bi.ativo{color:var(--m800);font-weight:700}
+    .bi .ic{width:22px;height:22px}
+
+    @media(max-width:860px){
+      .app{grid-template-columns:1fr;height:auto;min-height:100vh}
+      .sidebar{position:fixed;z-index:90;left:0;top:0;bottom:0;width:245px;transform:translateX(-100%);box-shadow:10px 0 30px rgba(62,39,35,.25)}
+      .sidebar.aberta{transform:none}
+      body.menu-recolhido .tx{display:revert}
+      #menuToggle{display:block}#colapsar{display:none}
+      .main{overflow:visible;padding:10px 10px calc(84px + env(safe-area-inset-bottom));padding-top:max(10px,env(safe-area-inset-top))}
+      .topbar{padding:12px;border-radius:12px}.tb-tit h1{font-size:1.1rem}
+      .actions{margin-left:0;width:100%}.actions>.btn,.actions>.dd{flex:1 1 auto}.actions .dd>.btn{width:100%}
+      .bell{flex:0 0 auto!important;width:auto!important}
+      .menu.notif{position:fixed;left:10px;right:10px;top:auto;width:auto;margin-top:6px}
+      .bnav{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:60;background:#fff;border-top:1px solid var(--m200);box-shadow:0 -2px 12px rgba(62,39,35,.1);padding-bottom:env(safe-area-inset-bottom)}
+      .barra{left:10px;right:10px;bottom:calc(74px + env(safe-area-inset-bottom));max-width:none}
+      .toast{bottom:calc(80px + env(safe-area-inset-bottom))}
+      #login h1{font-size:1.65rem}
+    }
+  </style>
 </head>
 <body>
 
-<!-- Ícones SVG usados na navegação inferior -->
-<svg style="display:none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-  <symbol id="ic-resumo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M5 20v-7M11 20V4M17 20v-4M3 20h18"/>
-  </symbol>
-  <symbol id="ic-obras" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M3 21h18M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16M9 7h2M13 7h2M9 11h2M13 11h2M9 15h2M13 15h2"/>
-  </symbol>
-  <symbol id="ic-funcionarios" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <circle cx="9" cy="8" r="3.4"/><path d="M2.5 20c.9-3.4 3.4-4.9 6.5-4.9s5.6 1.5 6.5 4.9"/><circle cx="17.5" cy="9.5" r="2.5"/><path d="M16 15.2c2.4.3 4.4 1.6 5 4.3"/>
-  </symbol>
-  <symbol id="ic-estoque" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/>
-  </symbol>
-  <symbol id="ic-auditoria" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6l8-3z"/><path d="M9 12l2 2 4-4"/>
-  </symbol>
-  <symbol id="ic-mais" viewBox="0 0 24 24" fill="currentColor" stroke="none">
-    <circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/>
-  </symbol>
-  <symbol id="ic-instalar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M12 3v11M7 9l5 5 5-5M4 20h16"/>
-  </symbol>
-  <symbol id="ic-fechar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-    <path d="M6 6l12 12M18 6L6 18"/>
-  </symbol>
-</svg>
-
-<!-- Tela de senha -->
-<div class="login" id="telaLogin">
-  <div class="login-card">
-    <div class="login-marca"><img class="brand-logo" src="logo.jpg" alt="Campbel"><span>TI em Obras</span></div>
-    <h1 id="loginTitulo">Entrar</h1>
-    <p class="login-sub" id="loginSub"></p>
-    <form id="formLogin" novalidate>
-      <label id="grupoCodigo" hidden>Código de recuperação
-        <input id="loginCodigo" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="XXXX-XXXX-XXXX">
-      </label>
-      <label id="grupoSenha"><span id="rotuloSenha">Senha</span>
-        <div class="campo-senha">
-          <input id="loginSenha" type="password" autocomplete="current-password">
-          <button type="button" class="ver-senha" id="verSenha" aria-label="Mostrar senha">Mostrar</button>
-        </div>
-      </label>
-      <label id="grupoConfirma" hidden>Confirmar senha
-        <input id="loginConfirma" type="password" autocomplete="new-password">
-      </label>
-      <p class="login-erro" id="loginErro" role="alert" hidden></p>
-      <button type="submit" class="btn btn-primary btn-largo" id="btnLogin">Entrar</button>
-    </form>
-    <button type="button" class="link-troca" id="linkTroca">Esqueci a senha</button>
-    <button type="button" class="link-instalar-login" id="btnInstalarLogin" hidden>
-      <svg class="icone-pequeno"><use href="#ic-instalar"></use></svg>
-      Instalar aplicativo no celular
-    </button>
+<!-- LOGIN -->
+<div id="login">
+  <div class="login-in">
+    <h1>Sistema Financeiro<br>Família Bembem</h1>
+    <p class="lead">Organização inteligente e aconchegante para as finanças da sua casa</p>
+    <h3>Selecione seu usuário</h3>
+    <div id="userList"></div>
+    <button class="glass" id="btnNovoUsuarioLogin"></button>
+    <button class="glass" id="btnRestaurarLogin"></button>
+    <button class="lnk-inst" id="btnInstalarLogin" hidden></button>
   </div>
+  <footer>Financeira Família Bem-Bem • Todos os direitos reservados</footer>
 </div>
 
 <div class="app">
-
-  <!-- Menu lateral -->
   <aside class="sidebar" id="sidebar">
-    <div class="brand">
-      <img class="brand-logo" src="logo.jpg" alt="Campbel">
-      <span>TI em Obras</span>
+    <div class="brand"><span class="tx">Família Bembem</span></div>
+    <div class="dd ucwrap">
+      <button type="button" class="usercard" data-dd id="btnUserCard" aria-label="Menu do usuário"><span class="av" id="userInitial">U</span><span class="tx"><b id="userNameDisplay">Usuário</b><small>● Online ▾</small></span></button>
+      <div class="menu" hidden><button type="button" id="btnEmail">E-mail de recuperação</button><button type="button" id="btnSair">Sair do usuário</button></div>
     </div>
-
-    <nav class="sidebar-menu">
-      <button class="menu-item-btn" id="btnMenuResumo" type="button">Resumo Geral Consolidado</button>
-      <button class="menu-item-btn ativo" id="btnMenuObras" type="button">Obras</button>
-      <button class="menu-item-btn" id="btnMenuFuncionarios" type="button">Funcionários</button>
-      <button class="menu-item-btn" id="btnMenuEstoque" type="button">Estoque</button>
-      <button class="menu-item-btn" id="btnMenuAuditoria" type="button">Auditoria</button>
-
-
-      <div class="divisor-sidebar"></div>
-
-      <button class="menu-item-btn" id="btnInstalarApp" type="button" hidden>
-        <svg class="icone-pequeno"><use href="#ic-instalar"></use></svg>
-        Instalar no celular
-      </button>
-      <button class="menu-item-btn" id="btnBackup" type="button">Salvar Backup</button>
-      <button class="menu-item-btn" id="btnRestaurar" type="button">Restaurar Backup</button>
-      <input type="file" id="arquivoBackup" accept=".json,application/json" hidden>
-
-      <div class="divisor-sidebar"></div>
-
-      <button class="menu-item-btn" id="btnAlterarSenha" type="button">Alterar Senha</button>
-      <button class="menu-item-btn" id="btnSair" type="button">Sair</button>
-    </nav>
-
-    <div class="info-backup-rodape">
-      <span id="infoBackup"></span>
-    </div>
+    <nav id="navSide"></nav>
+    <div class="foot tx">v3.1 • PWA</div>
   </aside>
 
   <main class="main">
-    <div class="faixa-backup" id="faixaBackup" role="alert" hidden>
-      <p id="textoFaixaBackup"></p>
-      <button class="btn btn-primary" id="btnBackupFaixa">Salvar backup agora</button>
-    </div>
+    <header class="topbar">
+      <button class="tb-btn" id="menuToggle" aria-label="Abrir menu">☰</button>
+      <button class="tb-btn" id="colapsar" aria-label="Recolher/expandir menu"><span></span><span></span><span></span></button>
+      <button class="tb-btn" id="btnVoltar" hidden>← Voltar</button>
+      <div class="tb-tit"><h1 id="tbTitulo"></h1><p id="tbSub"></p></div>
+      <div class="actions">
+        <button class="btn prim" id="btnAdd" hidden></button>
+        <div class="dd" id="ddXls"><button class="btn lt" data-dd>Exportar Excel ▾</button>
+          <div class="menu" hidden><button data-exp="xls">Esta página</button><button data-exp="xls" data-geral="1">Relatório geral</button></div></div>
+        <div class="dd" id="ddPdf"><button class="btn lt" data-dd>Exportar PDF ▾</button>
+          <div class="menu" hidden><button data-exp="pdf">Esta página</button><button data-exp="pdf" data-geral="1">Relatório geral</button></div></div>
+        <div class="dd"><button class="btn lt bell" data-dd aria-label="Notificações"></button>
+          <div class="menu notif" id="notifBox" hidden><h4>Notificações e alertas</h4><div id="notifList"></div></div></div>
+      </div>
+    </header>
 
-    <div class="faixa-backup faixa-perigo" id="faixaArmazenamento" role="alert" hidden>
-      <p id="textoFaixaArmazenamento"></p>
-      <button class="btn btn-primary" id="btnArquivarFaixa">Arquivar auditoria antiga</button>
-    </div>
+    <section id="tab-renda" class="tab" hidden>
+      <div class="card">
+        <span class="lbl">Salário</span>
+        <div class="row"><strong id="salarioDisplay" class="big">R$ 0,00</strong><button class="btn lt sm" id="btnEditSal">Editar</button></div>
+        <div class="row mt salbox" id="salBox" hidden><input type="number" step="0.01" min="0" id="inputSalario" placeholder="Novo valor"><button class="btn prim sm" id="btnSalSave">Salvar</button></div>
+      </div>
+      <div><h2 style="font-family:'Playfair Display',serif;margin-bottom:10px">Seu resumo orçamentário</h2><div class="kpis" id="kpis"></div></div>
+    </section>
 
-    <!-- ================= PÁGINA 1: OBRAS E EQUIPAMENTOS ================= -->
-    <div id="paginaObras">
-      <header class="topbar">
-        <button class="menu-toggle" id="menuToggle" aria-label="Abrir menu">☰</button>
-        <button class="btn btn-light btn-toggle-sidebar" type="button" title="Recolher/expandir menu" aria-label="Recolher/expandir menu"><span></span><span></span><span></span></button>
-        <button type="button" class="btn btn-light" id="btnVoltarListaObras" hidden style="margin-right: 6px; font-weight: 600;">← Voltar</button>
-        <div>
-          <h1 id="tituloObra">Obras</h1>
-          <p class="sub" id="subObra"></p>
-        </div>
-        <div class="actions" id="acoesTopoObra" hidden>
-          <button class="btn btn-light" id="btnNovoEquip">+ Equipamento</button>
-          <button class="btn btn-light" id="btnExportarPdf">Exportar PDF</button>
-          <button class="btn btn-primary" id="btnExportar">Exportar Excel</button>
-        </div>
-        <div class="actions" id="acoesTopoListaObras">
-          <button class="btn btn-primary" id="btnNovaObraTop" type="button">+ Nova Obra</button>
-          <button class="btn btn-light btn-perigo-suave" id="btnRemoverObraTop" type="button">Remover Obra</button>
-        </div>
-      </header>
-
-      <!-- Painel de Obras em formato de Lista -->
-      <section class="painel painel-grade-obras" id="painelGradeObras">
-        <div class="painel-head">
-          <div>
-            <h2>Selecione uma Obra</h2>
-            <span class="sub" id="qtdObrasGrade"></span>
-          </div>
-          <div class="botoes-linha">
-            <input type="search" id="buscaObraLista" placeholder="Buscar obra, engenheiro ou responsável...">
-          </div>
-        </div>
-        <div class="tabela-wrap">
-          <table>
-            <thead>
-            <tr>
-              <th>Obra (Ordem Alfabética)</th>
-              <th>Engenheiro Responsável</th>
-              <th>Resp. Escritório</th>
-              <th style="text-align: center;">Equipamentos</th>
-              <th style="text-align: right;">Ação</th>
-            </tr>
-            </thead>
-            <tbody id="gradeObras"></tbody>
-          </table>
-        </div>
-      </section>
-
-      <section class="kpis" id="kpis"></section>
-
-      <!-- Painel de Equipamentos -->
-      <section class="painel" id="painelEquipamentos">
-        <div class="painel-head">
-          <h2>Equipamentos</h2>
-          <div class="botoes-linha">
-            <input type="search" id="busca" placeholder="Buscar por nome, tipo ou responsável">
-          </div>
-        </div>
-        <div class="barra-filtros">
-          <label>Status <select class="filtro-select" id="filtroStatus"></select></label>
-          <label>Tipo <select class="filtro-select" id="filtroTipo"></select></label>
-          <button type="button" class="btn-link" id="limparFiltrosEquip" hidden>Limpar filtros</button>
-          <span class="contagem" id="contagemEquip"></span>
-        </div>
-        <div class="tabela-wrap">
-          <table>
-            <thead id="theadEquip">
-            <tr>
-              <th aria-sort="none"><button type="button" class="th-ordenar" data-ordem="nome">Equipamento <span class="seta"></span></button></th>
-              <th aria-sort="none"><button type="button" class="th-ordenar" data-ordem="tipo">Tipo <span class="seta"></span></button></th>
-              <th aria-sort="none"><button type="button" class="th-ordenar" data-ordem="obra">Obra <span class="seta"></span></button></th>
-              <th aria-sort="none"><button type="button" class="th-ordenar" data-ordem="responsavel">Responsável <span class="seta"></span></button></th>
-              <th aria-sort="none"><button type="button" class="th-ordenar" data-ordem="status">Status <span class="seta"></span></button></th>
-              <th></th>
-            </tr>
-            </thead>
-            <tbody id="corpoTabela"></tbody>
-            <tfoot id="tfootEquip" class="tabela-totais"></tfoot>
-          </table>
-          <p class="vazio" id="vazio" hidden>Nenhum equipamento encontrado. Clique em “+ Equipamento” para cadastrar.</p>
-          <div class="rodape-tabela">
-            <button type="button" class="btn btn-ghost-escuro" id="btnVerTodosEquip" hidden>Ver todos os equipamentos</button>
-          </div>
-        </div>
-      </section>
-
-      <!-- Painel de Solicitações -->
-      <section class="painel" id="painelSolicitacoes">
-        <div class="painel-head">
-          <h2>Solicitação de Equipamentos</h2>
-          <div class="botoes-linha">
-            <button class="btn btn-light" id="btnNovaSolic">+ Solicitação</button>
-            <button class="btn btn-light" id="btnExportarSolicPdf">Exportar PDF</button>
-            <button class="btn btn-primary" id="btnExportarSolic">Exportar Excel</button>
-          </div>
-        </div>
-        <div class="barra-filtros">
-          <label>Situação <select class="filtro-select" id="filtroSituacao"></select></label>
-          <label>Urgência <select class="filtro-select" id="filtroUrgencia"></select></label>
-          <button type="button" class="btn-link" id="limparFiltrosSolic" hidden>Limpar filtros</button>
-          <span class="contagem" id="contagemSolic"></span>
-        </div>
-        <div class="tabela-wrap">
-          <table>
-            <thead id="theadSolic">
-            <tr>
-              <th aria-sort="none"><button type="button" class="th-ordenar" data-ordem="equipamento">Equipamento solicitado <span class="seta"></span></button></th>
-              <th aria-sort="none"><button type="button" class="th-ordenar" data-ordem="tipo">Tipo <span class="seta"></span></button></th>
-              <th aria-sort="none"><button type="button" class="th-ordenar" data-ordem="quantidade">Qtd. <span class="seta"></span></button></th>
-              <th aria-sort="none"><button type="button" class="th-ordenar" data-ordem="obra">Obra <span class="seta"></span></button></th>
-              <th aria-sort="none"><button type="button" class="th-ordenar" data-ordem="solicitante">Solicitante <span class="seta"></span></button></th>
-              <th aria-sort="none"><button type="button" class="th-ordenar" data-ordem="urgencia">Urgência <span class="seta"></span></button></th>
-              <th aria-sort="none"><button type="button" class="th-ordenar" data-ordem="situacao">Situação <span class="seta"></span></button></th>
-              <th aria-sort="none"><button type="button" class="th-ordenar" data-ordem="data">Data <span class="seta"></span></button></th>
-              <th></th>
-            </tr>
-            </thead>
-            <tbody id="corpoSolic"></tbody>
-            <tfoot id="tfootSolic" class="tabela-totais"></tfoot>
-          </table>
-          <p class="vazio" id="vazioSolic" hidden>Nenhuma solicitação registrada. Clique em “+ Solicitação” para pedir um equipamento.</p>
-          <div class="rodape-tabela">
-            <button type="button" class="btn btn-ghost-escuro" id="btnVerTodasSolic" hidden>Ver todas as solicitações</button>
-          </div>
-        </div>
-      </section>
-    </div>
-
-    <!-- ================= PÁGINA 2: FUNCIONÁRIOS ================= -->
-    <div id="paginaFuncionarios" hidden>
-      <header class="topbar">
-        <button class="menu-toggle" id="menuToggleFunc" aria-label="Abrir menu">☰</button>
-        <button class="btn btn-light btn-toggle-sidebar" type="button" title="Recolher/expandir menu" aria-label="Recolher/expandir menu"><span></span><span></span><span></span></button>
-        <div>
-          <h1>Funcionários</h1>
-          <p class="sub">Controle de funcionários ativos, desligados e equipamentos entregues</p>
-        </div>
-        <div class="actions">
-          <button class="btn btn-light" id="btnNovoFuncionario" type="button">+ Funcionário</button>
-
-          <div class="dropdown-wrap">
-            <button class="btn btn-light" id="btnToggleDropdownExport" type="button">Exportar lista ▼</button>
-            <div class="dropdown-menu" id="menuDropdownExport" hidden>
-              <button type="button" id="btnExportarFuncExcel">Excel (.xlsx)</button>
-              <button type="button" id="btnExportarFuncPdf">PDF (.pdf)</button>
-            </div>
-          </div>
-
-          <div class="dropdown-wrap">
-            <button class="btn btn-primary" id="btnToggleDropdownGeral" type="button">Relatório geral ▼</button>
-            <div class="dropdown-menu" id="menuDropdownGeral" hidden>
-              <button type="button" id="btnGeralExcel">Excel (.xlsx)</button>
-              <button type="button" id="btnGeralPdf">PDF (.pdf)</button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <section class="caixas-selecao-func">
-        <button type="button" class="caixa-func-card ativa" id="caixaAbaAtivos">
-          <div class="caixa-func-topo">
-            <span class="ponto-status online"></span>
-            <strong>Funcionários Ativos</strong>
-          </div>
-          <div class="caixa-func-qtd" id="qtdFuncAtivos">0</div>
-        </button>
-
-        <button type="button" class="caixa-func-card" id="caixaAbaDesligados">
-          <div class="caixa-func-topo">
-            <span class="ponto-status desligado"></span>
-            <strong>Funcionários Desligados</strong>
-          </div>
-          <div class="caixa-func-qtd" id="qtdFuncDesligados">0</div>
-        </button>
-      </section>
-
-      <section class="painel" id="painelListaAtivos">
-        <div class="painel-head">
-          <h2>Lista de Funcionários Ativos</h2>
-          <div class="botoes-linha">
-            <input type="search" id="buscaFuncionario" placeholder="Pesquisar funcionário ativo...">
-          </div>
-        </div>
-        <div class="tabela-wrap">
-          <table>
-            <thead>
-            <tr>
-              <th style="width: 70%;">Nome do Funcionário</th>
-              <th style="text-align: right; width: 30%;">Ações</th>
-            </tr>
-            </thead>
-            <tbody id="corpoFuncionarios"></tbody>
-          </table>
-          <p class="vazio" id="vazioFunc" hidden>Nenhum funcionário ativo cadastrado.</p>
-        </div>
-      </section>
-
-      <section class="painel" id="painelListaDesligados" hidden>
-        <div class="painel-head">
-          <h2>Lista de Funcionários Desligados</h2>
-          <div class="botoes-linha">
-            <input type="search" id="buscaDesligado" placeholder="Pesquisar funcionário desligado...">
-          </div>
-        </div>
-        <div class="tabela-wrap">
-          <table>
-            <thead>
-            <tr>
-              <th style="width: 70%;">Nome do Funcionário</th>
-              <th style="text-align: right; width: 30%;">Ações</th>
-            </tr>
-            </thead>
-            <tbody id="corpoDesligados"></tbody>
-          </table>
-          <p class="vazio" id="vazioDeslig" hidden>Nenhum funcionário desligado registrado.</p>
-        </div>
-      </section>
-    </div>
-
-    <!-- ================= PÁGINA 3: AUDITORIA EXCLUSIVA ================= -->
-    <div id="paginaAuditoria" hidden>
-      <header class="topbar">
-        <button class="menu-toggle" id="menuToggleAudit" aria-label="Abrir menu">☰</button>
-        <button class="btn btn-light btn-toggle-sidebar" type="button" title="Recolher/expandir menu" aria-label="Recolher/expandir menu"><span></span><span></span><span></span></button>
-        <div>
-          <h1>Auditoria do Sistema</h1>
-          <p class="sub">Histórico completo de registros, alterações e exportações</p>
-        </div>
-        <div class="actions">
-          <button class="btn btn-light" id="btnArquivarAudit">Arquivar antigos</button>
-          <div class="dropdown-wrap">
-            <button class="btn btn-primary" id="btnToggleDropdownAudit" type="button">Exportar auditoria ▼</button>
-            <div class="dropdown-menu" id="menuDropdownAudit" hidden>
-              <button type="button" id="btnAuditExcel">Excel (.xlsx)</button>
-              <button type="button" id="btnAuditPdf">PDF (.pdf)</button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <section class="painel" id="painelAuditoria">
-        <div class="painel-head">
-          <h2>Registros de Auditoria</h2>
-          <div class="botoes-linha">
-            <input type="search" id="buscaAudit" placeholder="Buscar no histórico de auditoria">
-          </div>
-        </div>
-
-        <div class="barra-filtros" style="gap: 8px; padding: 10px 16px; align-items: center; flex-wrap: wrap;">
-          <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
-            <span style="font-size: 0.75rem; font-weight: 600; margin-right: 2px;">Categoria:</span>
-            <button type="button" class="btn btn-light ativo-filtro-audit" data-filtro-audit="todos" style="padding: 3px 8px; font-size: 0.74rem;">Todos</button>
-            <button type="button" class="btn btn-light" data-filtro-audit="novo" style="padding: 3px 8px; font-size: 0.74rem;">Novos</button>
-            <button type="button" class="btn btn-light" data-filtro-audit="edicao" style="padding: 3px 8px; font-size: 0.74rem;">Edições</button>
-            <button type="button" class="btn btn-light" data-filtro-audit="desligamento" style="padding: 3px 8px; font-size: 0.74rem;">Desligamentos</button>
-            <button type="button" class="btn btn-light" data-filtro-audit="remocao" style="padding: 3px 8px; font-size: 0.74rem;">Remoções</button>
-            <button type="button" class="btn btn-light" data-filtro-audit="exportacao" style="padding: 3px 8px; font-size: 0.74rem;">Exportações</button>
-          </div>
-
-          <div style="display: flex; align-items: center; gap: 6px; margin-left: auto; flex-wrap: wrap;">
-            <span style="font-size: 0.75rem; font-weight: 600;">Período:</span>
-            <label style="font-size: 0.73rem; font-weight: 400; gap: 3px; display: flex; align-items: center;">
-              De: <input type="date" id="filtroDataInicio" style="padding: 3px 6px; font-size: 0.74rem;">
-            </label>
-            <label style="font-size: 0.73rem; font-weight: 400; gap: 3px; display: flex; align-items: center;">
-              Até: <input type="date" id="filtroDataFim" style="padding: 3px 6px; font-size: 0.74rem;">
-            </label>
-            <button type="button" class="btn-link" id="limparFiltrosDataAudit" style="font-size: 0.72rem; padding: 2px 4px;" hidden>Limpar datas</button>
-          </div>
-        </div>
-
-        <p class="aviso-audit" id="avisoAudit" role="status" hidden></p>
-        <div class="tabela-wrap">
-          <table>
-            <thead>
-            <tr>
-              <th>Data e hora</th>
-              <th>Ação</th>
-              <th>Item</th>
-              <th>Obra</th>
-              <th>Detalhes</th>
-            </tr>
-            </thead>
-            <tbody id="corpoAudit"></tbody>
-          </table>
-          <p class="vazio" id="vazioAudit" hidden>Nenhum registro encontrado com este filtro.</p>
-          <p class="nota-audit" id="notaAudit" hidden></p>
-        </div>
-      </section>
-    </div>
-
-    <!-- ================= PÁGINA 4: RESUMO GERAL CONSOLIDADO ================= -->
-    <div id="paginaResumo" hidden>
-      <header class="topbar">
-        <button class="menu-toggle" id="menuToggleResumo" aria-label="Abrir menu">☰</button>
-        <button class="btn btn-light btn-toggle-sidebar" type="button" title="Recolher/expandir menu" aria-label="Recolher/expandir menu"><span></span><span></span><span></span></button>
-        <div>
-          <h1>Resumo Geral Consolidado</h1>
-          <p class="sub">Total de equipamentos, solicitações e estoque de todas as gaiolas</p>
-        </div>
-        <div class="actions">
-          <button class="btn btn-light" id="btnExportarResumoPdf">Exportar PDF Geral</button>
-          <button class="btn btn-primary" id="btnExportarResumoExcel">Exportar Excel Geral</button>
-        </div>
-      </header>
-
-      <section class="kpis" id="kpisResumo"></section>
-
-      <!-- Quadro de Obras -->
-      <section class="painel">
-        <div class="painel-head">
-          <h2>Quadro Geral de Obras</h2>
-          <div class="botoes-linha">
-            <input type="search" id="buscaResumoObra" placeholder="Buscar por obra ou engenheiro">
-          </div>
-        </div>
-        <div class="tabela-wrap">
-          <table>
-            <thead>
-            <tr>
-              <th>Obra</th>
-              <th>Engenheiro Responsável</th>
-              <th>Resp. Escritório</th>
-              <th style="text-align: center;">Total Equipamentos</th>
-              <th style="text-align: center;">Em Uso</th>
-              <th style="text-align: center;">Em Manutenção</th>
-              <th style="text-align: center;">Parados</th>
-              <th style="text-align: center;">Solicitações</th>
-            </tr>
-            </thead>
-            <tbody id="corpoResumoObras"></tbody>
-            <tfoot id="tfootResumoObras" class="tabela-totais"></tfoot>
-          </table>
-        </div>
-      </section>
-
-      <!-- Quadro Geral do Estoque por Gaiola -->
-      <section class="painel" style="margin-top: 20px;">
-        <div class="painel-head">
-          <h2>Quadro Geral do Estoque (Gaiolas 01 a 06)</h2>
-        </div>
-        <div class="tabela-wrap">
-          <table>
-            <thead>
-            <tr>
-              <th>Gaiola</th>
-              <th style="text-align: center;">Total de Itens</th>
-              <th style="text-align: center;">Setor TI</th>
-              <th style="text-align: center;">Setor ADM</th>
-              <th style="text-align: center;">Guardados</th>
-              <th style="text-align: center;">Em Uso</th>
-            </tr>
-            </thead>
-            <tbody id="corpoResumoEstoque"></tbody>
-            <tfoot id="tfootResumoEstoque" class="tabela-totais"></tfoot>
-          </table>
-        </div>
-      </section>
-    </div>
-
-    <!-- ================= PÁGINA 5: ESTOQUE E GAIOLAS ================= -->
-    <div id="paginaEstoque" hidden>
-      <header class="topbar">
-        <button class="menu-toggle" id="menuToggleEstoque" aria-label="Abrir menu">☰</button>
-        <button class="btn btn-light btn-toggle-sidebar" type="button" title="Recolher/expandir menu" aria-label="Recolher/expandir menu"><span></span><span></span><span></span></button>
-        <button type="button" class="btn btn-light" id="btnVoltarListaGaiolas" hidden style="margin-right: 6px; font-weight: 600;">← Voltar</button>
-        <div>
-          <h1 id="tituloGaiola">Estoque</h1>
-          <p class="sub" id="subGaiola">Gerenciamento das gaiolas de armazenamento</p>
-        </div>
-
-        <!-- Ações na lista de gaiolas (visão geral do estoque) -->
-        <div class="actions" id="acoesTopoListaGaiolas">
-          <button class="btn btn-light" id="btnExportarEstoqueGeralPdf" type="button">Exportar para PDF</button>
-          <button class="btn btn-primary" id="btnExportarEstoqueGeralExcel" type="button">Exportar para Excel</button>
-        </div>
-
-        <!-- Ações dentro de uma gaiola -->
-        <div class="actions" id="acoesTopoGaiola" hidden>
-          <button class="btn btn-light" id="btnNovoItemEstoque" type="button">+ Adicionar</button>
-          <button class="btn btn-light btn-perigo-suave" id="btnRemoverItemEstoque" type="button">Remover</button>
-          <button class="btn btn-light" id="btnExportarEstoquePdf" type="button">Exportar para PDF</button>
-          <button class="btn btn-primary" id="btnExportarEstoqueExcel" type="button">Exportar para Excel</button>
-        </div>
-      </header>
-
-      <!-- Painel de Gaiolas em formato de Lista -->
-      <section class="painel painel-grade-gaiolas" id="painelGradeGaiolas">
-        <div class="painel-head">
-          <div>
-            <h2>Selecione uma Gaiola</h2>
-            <span class="sub">Gaiolas de 01 a 06 disponíveis</span>
-          </div>
-          <div class="botoes-linha">
-            <input type="search" id="buscaGaiolaLista" placeholder="Buscar gaiola...">
-          </div>
-        </div>
-        <div class="tabela-wrap">
-          <table>
-            <thead>
-            <tr>
-              <th>Gaiola</th>
-              <th style="text-align: center;">Total de Itens</th>
-              <th style="text-align: right;">Ação</th>
-            </tr>
-            </thead>
-            <tbody id="gradeGaiolas"></tbody>
-          </table>
-        </div>
-      </section>
-
-      <!-- Painel de Itens da Gaiola Selecionada -->
-      <section class="painel" id="painelItensEstoque" hidden>
-        <div class="painel-head">
-          <h2 id="tituloTabelaGaiola">Itens da Gaiola</h2>
-          <div class="botoes-linha">
-            <input type="search" id="buscaEstoque" placeholder="Buscar por nome, tipo ou setor">
-          </div>
-        </div>
-        <div class="barra-filtros">
-          <label>Setor <select class="filtro-select" id="filtroSetorEstoque"><option value="">Todos</option><option value="TI">TI</option><option value="ADM">ADM</option></select></label>
-          <label>Status <select class="filtro-select" id="filtroStatusEstoque"><option value="">Todos</option><option value="Guardado">Guardado</option><option value="Em uso">Em uso</option></select></label>
-          <span class="contagem" id="contagemEstoque"></span>
-        </div>
-        <div class="tabela-wrap">
-          <table>
-            <thead>
-            <tr>
-              <th>Nome / Descrição</th>
-              <th>Tipo</th>
-              <th>Setor</th>
-              <th>Status</th>
-              <th>Data de Entrada / Uso</th>
-              <th style="text-align: right;">Ações</th>
-            </tr>
-            </thead>
-            <tbody id="corpoTabelaEstoque"></tbody>
-          </table>
-          <p class="vazio" id="vazioEstoque" hidden>Nenhum item cadastrado nesta gaiola. Clique em “+ Adicionar” para cadastrar.</p>
-        </div>
-      </section>
-    </div>
-
-    <!-- Modal genérico do sistema (substitui alert/confirm do navegador) -->
-    <dialog id="dlgAvisoSistema">
-      <form method="dialog" id="formAvisoSistema" novalidate style="padding: 20px; display: grid; gap: 12px; max-width: 400px;">
-        <h3 id="tituloAvisoSistema" style="margin: 0; font-size: 1.05rem; color: var(--texto-principal);">Aviso do Sistema</h3>
-        <p id="textoAvisoSistema" style="margin: 0; font-size: 0.85rem; line-height: 1.4; color: var(--texto-suave);"></p>
-        <div class="dlg-actions" style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 8px;">
-          <button type="button" class="btn btn-light" id="btnCancelarAviso" hidden>Cancelar</button>
-          <button type="submit" class="btn btn-primary" id="btnConfirmarAviso">OK</button>
-        </div>
-      </form>
-    </dialog>
-
+    <section id="tab-entradas" class="tab" hidden><div class="tw"><table><thead><tr><th>Descrição</th><th>Forma</th><th>Valor</th><th>Data</th><th class="r">Ações</th></tr></thead><tbody id="bEntradas"></tbody></table></div></section>
+    <section id="tab-dividas" class="tab" hidden><div class="tw"><table><thead><tr><th>Título</th><th>Valor</th><th>Término / Vencimento</th><th>Status / Pagamento</th><th class="r">Ações</th></tr></thead><tbody id="bDividas"></tbody></table></div></section>
+    <section id="tab-gastos" class="tab" hidden><div class="tw"><table><thead><tr><th>Descrição</th><th>Categoria</th><th>Forma</th><th>Valor</th><th>Data</th><th class="r">Ações</th></tr></thead><tbody id="bGastos"></tbody></table></div></section>
+    <section id="tab-cartoes" class="tab" hidden><div class="cards" id="gCartoes"></div></section>
+    <section id="tab-auditoria" class="tab" hidden><div class="tw"><table><thead><tr><th>Data</th><th>Hora</th><th>Usuário</th><th>Ação realizada</th></tr></thead><tbody id="bAudit"></tbody></table></div></section>
+    <section id="tab-apagarUsuario" class="tab" hidden><div class="card" style="max-width:560px"><p style="color:var(--m600);margin-bottom:12px">Selecione o usuário que deseja remover do sistema:</p><div id="listaApagar" style="display:grid;gap:10px"></div></div></section>
   </main>
 </div>
 
-<!-- Barra flutuante de instalação (Android/Chrome) -->
-<div class="barra-instalar" id="barraInstalar" hidden role="region" aria-label="Instalar aplicativo">
-  <div class="barra-instalar-info">
-    <img src="icon-192.png" alt="" class="barra-instalar-icone">
-    <div>
-      <strong>TI em Obras</strong>
-      <span>Instale no celular para usar como aplicativo</span>
-    </div>
-  </div>
-  <div class="barra-instalar-acoes">
-    <button type="button" class="btn btn-primary" id="btnInstalarBarra">Instalar</button>
-    <button type="button" class="btn-fechar-barra" id="btnFecharBarraInstalar" aria-label="Fechar aviso de instalação">
-      <svg class="icone-pequeno"><use href="#ic-fechar"></use></svg>
-    </button>
-  </div>
+<nav class="bnav" id="bnav" aria-label="Navegação principal"></nav>
+
+<div class="barra" id="barraInstalar" hidden role="region" aria-label="Instalar aplicativo">
+  <div class="inf"><div><strong>Financeiro Bembem</strong><span>Instale para usar como aplicativo</span></div></div>
+  <div class="row" style="gap:4px;flex-wrap:nowrap"><button class="btn prim" id="btnInstalarBarra">Instalar</button><button class="x" id="btnFecharBarra" aria-label="Fechar">✕</button></div>
 </div>
 
-<!-- Navegação inferior estilo aplicativo (celular) -->
-<nav class="bottom-nav" id="bottomNav" aria-label="Navegação principal">
-  <button type="button" class="bottom-nav-item" id="btnTabResumo" data-tela="resumo">
-    <svg class="icone-nav"><use href="#ic-resumo"></use></svg><span>Resumo</span>
-  </button>
-  <button type="button" class="bottom-nav-item ativo" id="btnTabObras" data-tela="obras">
-    <svg class="icone-nav"><use href="#ic-obras"></use></svg><span>Obras</span>
-  </button>
-  <button type="button" class="bottom-nav-item" id="btnTabFuncionarios" data-tela="funcionarios">
-    <svg class="icone-nav"><use href="#ic-funcionarios"></use></svg><span>Funcionários</span>
-  </button>
-  <button type="button" class="bottom-nav-item" id="btnTabEstoque" data-tela="estoque">
-    <svg class="icone-nav"><use href="#ic-estoque"></use></svg><span>Estoque</span>
-  </button>
-  <button type="button" class="bottom-nav-item" id="btnTabAuditoria" data-tela="auditoria">
-    <svg class="icone-nav"><use href="#ic-auditoria"></use></svg><span>Auditoria</span>
-  </button>
-  <button type="button" class="bottom-nav-item" id="btnTabMais">
-    <svg class="icone-nav"><use href="#ic-mais"></use></svg><span>Mais</span>
-  </button>
-</nav>
+<!-- MODAIS -->
+<dialog id="dlgUsuario"><form id="fUsuario"><h3>Cadastrar novo usuário</h3>
+  <label>Nome do usuário<input id="newUserName" required maxlength="40" autocomplete="off"></label>
+  <label>E-mail (para recuperar a senha)<input type="email" id="newUserEmail" required autocomplete="email"></label>
+  <label>Senha<input type="password" id="newUserPass" required minlength="4" autocomplete="new-password"></label>
+  <label>Confirmar senha<input type="password" id="newUserPass2" required minlength="4" autocomplete="new-password"></label>
+  <p class="erro" id="erroNovoUser" hidden></p>
+  <div class="dact"><button type="button" class="btn lt" data-close>Cancelar</button><button class="btn prim">Cadastrar</button></div></form></dialog>
 
-<!-- ================= MODAIS ================= -->
-<dialog id="dlgInstalar">
-  <div class="modal-card-conteudo">
-    <div class="modal-cabecalho">
-      <h3 id="tituloInstalar">Instalar aplicativo</h3>
-    </div>
-    <div class="instalar-corpo">
-      <img src="icon-192.png" alt="Ícone do aplicativo TI em Obras" class="instalar-icone-grande">
-      <p id="textoInstalar" class="instalar-texto"></p>
-    </div>
-    <div class="dlg-actions">
-      <button type="button" class="btn btn-light" id="btnFecharInstalar">Fechar</button>
-      <button type="button" class="btn btn-primary" id="btnInstalarAgora" hidden>Instalar agora</button>
-    </div>
-  </div>
-</dialog>
+<dialog id="dlgSenha"><form id="fSenha"><h3 id="senhaTitulo">Digite sua senha</h3>
+  <p id="senhaSub" style="font-size:.84rem;color:var(--m700)"></p>
+  <label>Senha<input type="password" id="senhaIn" required autocomplete="current-password"></label>
+  <label id="senhaConfBox" hidden>Confirmar senha<input type="password" id="senhaIn2" autocomplete="new-password"></label>
+  <label id="senhaEmailBox" hidden>E-mail para recuperar a senha<input type="email" id="senhaEmail" autocomplete="email"></label>
+  <p class="erro" id="erroSenha" hidden></p>
+  <button type="button" class="lk" id="btnEsqueci" style="margin:0;justify-self:start" hidden>Esqueci minha senha</button>
+  <div class="dact"><button type="button" class="btn lt" data-close>Cancelar</button><button class="btn prim" id="senhaBtn">Entrar</button></div></form></dialog>
 
-<dialog id="dlgSenhaRemoverFunc">
-  <form method="dialog" id="formSenhaRemoverFunc" novalidate>
-    <h3>Autorização de Exclusão</h3>
-    <p style="font-size: 0.82rem; color: var(--texto-suave);">Para remover este funcionário permanentemente, digite sua senha de acesso ao sistema:</p>
-    <label>Senha do Sistema <input type="password" id="inputSenhaRemoverFunc" autocomplete="current-password"></label>
-    <p class="login-erro" id="erroSenhaRemoverFunc" hidden></p>
-    <div class="dlg-actions">
-      <button type="button" class="btn btn-light" id="cancelaSenhaRemoverFunc">Cancelar</button>
-      <button type="submit" class="btn btn-perigo">Confirmar e Remover</button>
-    </div>
-  </form>
-</dialog>
+<dialog id="dlgReset"><form id="fReset"><h3>Redefinir senha</h3>
+  <p id="resetSub" style="font-size:.84rem;color:var(--m700)"></p>
+  <label>Código recebido por e-mail<input id="resetCodigo" inputmode="numeric" maxlength="6" required autocomplete="one-time-code"></label>
+  <label>Nova senha<input type="password" id="resetNova" required minlength="4" autocomplete="new-password"></label>
+  <label>Confirmar nova senha<input type="password" id="resetNova2" required minlength="4" autocomplete="new-password"></label>
+  <p class="erro" id="erroReset" hidden></p>
+  <div class="dact"><button type="button" class="btn lt" data-close>Cancelar</button><button class="btn prim">Trocar senha</button></div></form></dialog>
 
-<dialog id="dlgSenhaRemoverGaiola">
-  <form method="dialog" id="formSenhaRemoverGaiola" novalidate>
-    <h3>Remover</h3>
-    <p id="textoExcluirGaiola" style="font-size: 0.82rem; color: var(--texto-suave);"></p>
-    <label>Senha do Sistema <input type="password" id="inputSenhaRemoverGaiola" autocomplete="current-password"></label>
-    <p class="login-erro" id="erroSenhaRemoverGaiola" hidden></p>
-    <div class="dlg-actions">
-      <button type="button" class="btn btn-light" id="cancelaSenhaRemoverGaiola">Cancelar</button>
-      <button type="submit" class="btn btn-perigo">Confirmar e Esvaziar</button>
-    </div>
-  </form>
-</dialog>
+<dialog id="dlgEmail"><form id="fEmail"><h3>E-mail de recuperação</h3>
+  <p style="font-size:.84rem;color:var(--m700)">Usado para receber o código caso você esqueça a senha.</p>
+  <label>E-mail<input type="email" id="emailIn" required autocomplete="email"></label>
+  <p class="erro" id="erroEmail" hidden></p>
+  <div class="dact"><button type="button" class="btn lt" data-close>Cancelar</button><button class="btn prim">Salvar</button></div></form></dialog>
 
-<dialog id="dlgRemoverItemEstoque">
-  <form method="dialog" id="formRemoverItemEstoqueModal" novalidate>
-    <h3>Remover Item do Estoque</h3>
-    <div id="textoConfirmarRemoverItemEstoque" class="item-detalhe-bloco" style="margin-top: 4px;"></div>
-    <div class="caixa-aviso-conferencia">
-      <span class="icone-aviso-conferencia">!</span>
-      <span>Deseja realmente remover este item do estoque?</span>
-    </div>
-    <div class="dlg-actions">
-      <button type="button" class="btn btn-light" id="cancelaRemoverItemEstoque">Cancelar</button>
-      <button type="submit" class="btn btn-perigo">Sim, Remover</button>
-    </div>
-  </form>
-</dialog>
+<dialog id="dlgEntrada"><form id="fEntrada"><h3 id="entTituloDlg">Nova entrada de dinheiro</h3>
+  <label>Descrição<input id="entDesc" required></label>
+  <label>Forma de recebimento<select id="entForma"><option>Pix</option><option>Dinheiro Físico</option><option>Transferência</option><option>Boleto Bancário</option><option>Código de Barras</option></select></label>
+  <label>Valor (R$)<input type="number" step="0.01" min="0.01" id="entValor" required></label>
+  <label>Data<input type="date" id="entData" required></label>
+  <div class="dact"><button type="button" class="btn lt" data-close>Cancelar</button><button class="btn prim" id="entSalvarBtn">Salvar</button></div></form></dialog>
 
-<dialog id="dlgDetalhesFunc">
-  <div class="modal-card-conteudo">
-    <div class="modal-cabecalho">
-      <h3 id="detalheFuncNome">Detalhes do Funcionário</h3>
-      <span class="badge online" id="detalheFuncBadgeStatus">Ativo</span>
-    </div>
-    <div class="detalhes-grid" id="detalheFuncCorpo"></div>
-    <div class="dlg-actions">
-      <button type="button" class="btn btn-light" id="fecharDetalhesFunc">Fechar</button>
-      <button type="button" class="btn btn-primary" id="btnConcluirManutencaoDetalhe" hidden>Concluir Manutenção</button>
-      <button type="button" class="btn btn-light" id="btnGerenciarReservaDetalhe" hidden>Gerenciar Reserva</button>
-      <button type="button" class="btn btn-light" id="btnEditarPeloDetalhe">Editar</button>
-      <button type="button" class="btn btn-light" id="btnDesligarPeloDetalhe" style="color: var(--vermelho-aveludado); border-color: var(--vermelho-borda-suave);">Desligar</button>
-      <button type="button" class="btn btn-perigo" id="btnRemoverAtivoPeloDetalhe">Remover Funcionário</button>
-    </div>
-  </div>
-</dialog>
+<dialog id="dlgDivida"><form id="fDivida"><h3 id="divTituloDlg">Adicionar dívida fixa</h3>
+  <label>Título da dívida<input id="divTitulo" required></label>
+  <label>Tipo<div class="seg"><button type="button" id="tpProduto" data-tp="Produto" class="on">Produto</button><button type="button" id="tpServico" data-tp="Serviço">Serviço</button></div></label>
+  <div id="pgDiv" class="grid2"></div>
+  <label><span id="divValorLbl">Valor (R$)</span><input type="number" step="0.01" min="0.01" id="divValor" required></label>
+  <label>Data em que começou<input type="date" id="divData" required></label>
+  <div class="prev" id="divPrev" hidden></div>
+  <div class="dact"><button type="button" class="btn lt" data-close>Cancelar</button><button class="btn prim" id="divSalvarBtn">Salvar</button></div></form></dialog>
 
-<dialog id="dlgDetalhesDesligado">
-  <div class="modal-card-conteudo">
-    <div class="modal-cabecalho">
-      <h3 id="detalheDesligNome">Detalhes do Desligamento</h3>
-      <span class="badge offline">Desligado</span>
-    </div>
-    <div class="detalhes-grid" id="detalheDesligCorpo"></div>
-    <div class="dlg-actions">
-      <button type="button" class="btn btn-light" id="fecharDetalhesDeslig">Fechar</button>
-      <span id="rotuloBaixaConcluida" class="tag-baixa-concluida" hidden>✓ Devolução Concluída</span>
-      <button type="button" class="btn btn-primary" id="btnAcaoBaixaPeloDetalhe">Dar Baixa</button>
-      <button type="button" class="btn btn-primary" id="btnReativarFuncPeloDetalhe">Ativar Funcionário</button>
-      <button type="button" class="btn btn-perigo" id="btnRemoverDesligadoPeloDetalhe">Remover Funcionário</button>
-    </div>
-  </div>
-</dialog>
+<dialog id="dlgGasto"><form id="fGasto"><h3 id="gastoTituloDlg">Registrar gasto</h3>
+  <label>Descrição<input id="gastoDesc" required></label>
+  <label>Categoria<select id="gastoCat"><option>Alimentação</option><option>Saúde</option><option>Lazer</option><option>Transporte</option><option>Outros</option></select></label>
+  <div id="pgGasto" class="grid2"></div>
+  <label><span id="gastoValorLbl">Valor total à vista (R$)</span><input type="number" step="0.01" min="0.01" id="gastoValor" required></label>
+  <label>Data<input type="date" id="gastoData" required></label>
+  <div class="dact"><button type="button" class="btn lt" data-close>Cancelar</button><button class="btn prim" id="gastoSalvarBtn">Salvar</button></div></form></dialog>
 
-<dialog id="dlgSenhaReativar">
-  <form method="dialog" id="formSenhaReativar" novalidate>
-    <h3>Confirmar Ativação de Funcionário</h3>
-    <p style="font-size: 0.82rem; color: var(--texto-suave);">Por segurança, digite sua senha de acesso para reativar este colaborador:</p>
-    <label>Senha do Sistema <input type="password" id="inputSenhaReativar" autocomplete="current-password"></label>
-    <p class="login-erro" id="erroSenhaReativar" hidden></p>
-    <div class="dlg-actions">
-      <button type="button" class="btn btn-light" id="cancelaSenhaReativar">Cancelar</button>
-      <button type="submit" class="btn btn-primary">Confirmar e Ativar</button>
-    </div>
-  </form>
-</dialog>
+<dialog id="dlgCartao"><form id="fCartao"><h3 id="cartTituloDlg">Adicionar cartão</h3>
+  <label>Nome do cartão<input id="cartaoNome" required placeholder="Ex: Nubank Platinum"></label>
+  <label>Banco / cor do cartão<select id="cartaoBanco" required><option value="" disabled selected>Selecione...</option><option>Nubank</option><option>Inter</option><option>Itaú</option><option>Bradesco</option><option>Bradesco Black</option><option>Caixa</option><option>Alimentação</option><option>Outro</option></select></label>
+  <label id="cartaoOutroBox" hidden>Nome do banco<input id="cartaoBancoOutro" maxlength="40" placeholder="Ex: Santander"></label>
+  <label id="cartaoCorBox" hidden>Escolha a cor do cartão<input type="color" id="cartaoCor" value="#2e7d32" style="height:38px;padding:3px"></label>
+  <div id="cartaoPrev" class="cc-prev" title="Prévia da cor"></div>
+  <label>Tipo<select id="cartaoTipo"><option>Crédito e Débito</option><option>Apenas Crédito</option><option>Apenas Débito</option></select></label>
+  <label>Final (4 dígitos)<input id="cartaoFinal" required maxlength="4" inputmode="numeric" pattern="\d{4}" placeholder="1234"></label>
+  <label>Limite (R$)<input type="number" step="0.01" min="0" id="cartaoLimite" required></label>
+  <div class="dact"><button type="button" class="btn lt" data-close>Cancelar</button><button class="btn prim" id="cartSalvarBtn">Salvar</button></div></form></dialog>
 
-<dialog id="dlgFuncionario">
-  <form method="dialog" id="formFuncionario" novalidate>
-    <h3 id="tituloDlgFunc">Cadastrar Funcionário</h3>
+<dialog id="dlgConfirm"><div class="dbody"><h3 id="cfTitulo"></h3><p id="cfMsg" style="font-size:.86rem;color:var(--m700)"></p>
+  <div class="dact"><button class="btn lt" id="cfNao">Cancelar</button><button class="btn dng" id="cfSim">Sim, remover</button></div></div></dialog>
 
-    <label>Nome do Funcionário
-      <input name="nome" id="campoNomeFuncionario" placeholder="Ex.: Carlos Silva">
-    </label>
-
-    <label>Empresa
-      <select name="empresa" id="selEmpresaFunc">
-        <option value="Campbel Construções">Campbel Construções</option>
-        <option value="Construtora JN">Construtora JN</option>
-        <option value="Construtora JOTAELE">Construtora JOTAELE</option>
-      </select>
-    </label>
-
-    <label>Local
-      <select name="local" id="selLocalFunc">
-        <!-- Preenchido dinamicamente com as obras cadastradas -->
-      </select>
-    </label>
-
-    <div style="font-size: 0.82rem; font-weight: 600; color: var(--texto-principal); margin-top: 4px;">Equipamento(s) Entregue(s)</div>
-    <div id="containerEquipamentosForm" style="display: grid; gap: 10px;"></div>
-    <button type="button" class="btn btn-light" id="btnAddEquipForm" style="width: 100%; border-style: dashed;">+ Adicionar outro equipamento</button>
-
-    <div class="divisor-interno-form"></div>
-
-    <label>Termo de Responsabilidade Geral
-      <select name="termoStatus" id="selTermoStatus">
-        <option value="Pendente">Pendente (ainda não pegou o termo)</option>
-        <option value="Entregue">Entregue (ao funcionário)</option>
-      </select>
-    </label>
-    <label>Data de Entrega do Termo ao Funcionário <input type="date" name="dataTermoEntregue" id="dataTermoEntregue" disabled></label>
-    <label>Data de Devolução do Termo Assinado <input type="date" name="dataTermoDevolvido" id="dataTermoDevolvido" disabled></label>
-
-    <div class="caixa-aviso-conferencia" id="caixaAvisoConferencia" hidden>
-      <span class="icone-aviso-conferencia">ℹ</span>
-      <span>Verifique se todas as informações estão corretas.</span>
-    </div>
-
-    <div class="dlg-actions">
-      <button type="button" class="btn btn-light" id="cancelaFuncionario">Cancelar</button>
-      <button type="submit" class="btn btn-primary" id="btnSalvarFuncionario">Salvar Funcionário</button>
-    </div>
-  </form>
-</dialog>
-
-<dialog id="dlgReserva">
-  <form method="dialog" id="formReserva" novalidate>
-    <h3>Equipamento em Manutenção / Reserva</h3>
-    <p class="pergunta-reserva" id="textoPerguntaReserva">O funcionário está com outro equipamento para trabalhar?</p>
-    <div class="opcoes-reserva">
-      <label class="radio-label"><input type="radio" name="temReserva" value="nao" checked> Não (Sem equipamento reserva)</label>
-      <label class="radio-label"><input type="radio" name="temReserva" value="sim"> Sim (Cadastrar equipamento reserva)</label>
-    </div>
-    <div id="camposEquipReserva" hidden>
-      <label>Tipo de Equipamento Reserva
-        <select name="tipoEquipamentoReserva" id="selTipoEquipReserva">
-          <option>Notebook</option>
-          <option>Mouse</option>
-          <option>Teclado</option>
-          <option>Celular</option>
-          <option>Suporte para notebook</option>
-        </select>
-      </label>
-      <label>Nome e Marca do Equipamento Reserva <input name="marcaEquipamentoReserva" id="inputMarcaEquipReserva" placeholder="Ex.: Notebook Lenovo Reserva 02"></label>
-      <label>Data de Entrega do Equipamento Reserva <input type="date" name="dataEntregaReserva" id="dataEntregaReserva"></label>
-
-      <div class="divisor-interno-form"></div>
-
-      <label>Termo de Responsabilidade (Equip. Reserva)
-        <select name="termoStatusReserva" id="selTermoStatusReserva">
-          <option value="Pendente">Pendente (ainda não pegou o termo)</option>
-          <option value="Entregue">Entregue (ao funcionário)</option>
-        </select>
-      </label>
-      <label>Data de Entrega do Termo (Reserva) <input type="date" name="dataTermoEntregueReserva" id="dataTermoEntregueReserva" disabled></label>
-      <label>Data de Devolução do Termo Assinado (Reserva) <input type="date" name="dataTermoDevolvidoReserva" id="dataTermoDevolvidoReserva" disabled></label>
-    </div>
-    <div class="dlg-actions">
-      <button type="button" class="btn btn-light" id="cancelaReserva">Cancelar</button>
-      <button type="submit" class="btn btn-primary">Confirmar e Salvar</button>
-    </div>
-  </form>
-</dialog>
-
-<dialog id="dlgDesligar">
-  <form method="dialog" id="formDesligar" novalidate>
-    <h3>Desligar Funcionário</h3>
-    <div id="textoDesligarConfirm" style="font-size: 0.82rem; line-height: 1.45;"></div>
-    <label>Data do Desligamento <input type="date" name="dataDesligamento" id="dataDesligamento"></label>
-    <div id="blocoChecklistDesligamento" style="margin-top: 6px;"></div>
-    <div class="dlg-actions">
-      <button type="button" class="btn btn-light" id="cancelaDesligar">Cancelar</button>
-      <button type="submit" class="btn btn-perigo" id="btnConfirmarDesligar">Confirmar Desligamento</button>
-    </div>
-  </form>
-</dialog>
-
-<dialog id="dlgBaixaDevolucao">
-  <form method="dialog" id="formBaixaDevolucao" novalidate>
-    <h3>Registrar Devolução de Equipamento</h3>
-    <div id="textoBaixaFuncionario" style="font-size: 0.82rem; line-height: 1.45;"></div>
-    <div id="checklistItensBaixa" style="margin: 10px 0; display: grid; gap: 6px;"></div>
-    <label>Data da Devolução <input type="date" name="dataBaixa" id="dataBaixa"></label>
-    <div class="dlg-actions">
-      <button type="button" class="btn btn-light" id="cancelaBaixaDevolucao">Cancelar</button>
-      <button type="submit" class="btn btn-primary">Salvar Devolução</button>
-    </div>
-  </form>
-</dialog>
-
-<dialog id="dlgConfirmarExclusaoSolic">
-  <form method="dialog" id="formConfirmarExclusaoSolic" novalidate>
-    <h3>Remover Solicitação</h3>
-    <div id="textoConfirmarExclusaoSolic" class="item-detalhe-bloco" style="margin-top: 4px;"></div>
-    <div class="caixa-aviso-conferencia">
-      <span class="icone-aviso-conferencia">!</span>
-      <span>Deseja realmente remover esta solicitação de equipamento do sistema?</span>
-    </div>
-    <div class="dlg-actions">
-      <button type="button" class="btn btn-light" id="cancelaConfirmarExclusaoSolic">Cancelar</button>
-      <button type="submit" class="btn btn-perigo">Sim, Remover</button>
-    </div>
-  </form>
-</dialog>
-
-<dialog id="dlgConfirmarExclusaoEquip">
-  <form method="dialog" id="formConfirmarExclusaoEquip" novalidate>
-    <h3>Remover Equipamento</h3>
-    <div id="textoConfirmarExclusaoEquip" class="item-detalhe-bloco" style="margin-top: 4px;"></div>
-    <div class="caixa-aviso-conferencia">
-      <span class="icone-aviso-conferencia">!</span>
-      <span>Deseja realmente remover este equipamento do inventário da obra?</span>
-    </div>
-    <div class="dlg-actions">
-      <button type="button" class="btn btn-light" id="cancelaConfirmarExclusaoEquip">Cancelar</button>
-      <button type="submit" class="btn btn-perigo">Sim, Remover</button>
-    </div>
-  </form>
-</dialog>
-
-<dialog id="dlgEquip">
-  <form method="dialog" id="formEquip" novalidate>
-    <h3 id="tituloEquip">Novo equipamento</h3>
-    <label>Nome <input name="nome" placeholder="Ex.: Notebook Dell 03"></label>
-    <label>Tipo
-      <select name="tipo" id="selTipo">
-        <option>Cabo</option>
-        <option>Câmera</option>
-        <option>Carregador p/ Notebook</option>
-        <option>Carregador p/ Rádio</option>
-        <option>Carregador p/ Rádio Móvel</option>
-        <option>Corrediça</option>
-        <option>CPU</option>
-        <option>Cooler de CPU</option>
-        <option>DVR</option>
-        <option>Fonte de CPU</option>
-        <option>Gabinete</option>
-        <option>Impressora</option>
-        <option>Luva</option>
-        <option>Maleta de Ferramentas</option>
-        <option>Monitor</option>
-        <option>Nobreak</option>
-        <option>Notebook</option>
-        <option>Rádio</option>
-        <option>Roteador</option>
-        <option>Starlink</option>
-        <option>Suporte de Monitor</option>
-        <option>Suporte p/ ThinkPad</option>
-        <option>Suporte para notebook</option>
-        <option>Teclado c/ fio</option>
-        <option>Teclado s/ fio</option>
-        <option>Toner</option>
-        <option>Tubo</option>
-        <option>Outro</option>
-      </select>
-    </label>
-    <label>Obra <select name="obra" id="selObra"></select></label>
-    <label>Responsável <select name="responsavel" id="selResponsavel"></select></label>
-    <label>Status
-      <select name="status" id="selStatus">
-        <option value="online">Em uso</option>
-        <option value="manutencao">Em manutenção</option>
-        <option value="parado">Equip. Parado</option>
-      </select>
-    </label>
-    <label id="grupoQtdEquip" hidden>Quantidade a cadastrar <input name="qtd" type="number" min="1" max="50" value="1"></label>
-    <div class="dlg-actions">
-      <button type="button" class="btn btn-light" id="cancelaEquip">Cancelar</button>
-      <button type="submit" class="btn btn-primary" id="btnSalvarEquip">Salvar equipamento</button>
-    </div>
-  </form>
-</dialog>
-
-<dialog id="dlgSolic">
-  <form method="dialog" id="formSolic" novalidate>
-    <h3 id="tituloSolic">Solicitar equipamento</h3>
-    <label>Obra <select name="obra" id="selObraSolic"></select></label>
-    <label>Equipamento <input name="equipamento" placeholder="Ex.: Notebook para almoxarifado"></label>
-    <label>Tipo
-      <select name="tipo" id="selTipoSolic">
-        <option>Notebook</option>
-        <option>Mouse</option>
-        <option>Teclado</option>
-        <option>Celular</option>
-        <option>Suporte para notebook</option>
-        <option>Roteador</option>
-        <option>Câmera</option>
-        <option>Impressora</option>
-        <option>Rádio</option>
-        <option>Outro</option>
-      </select>
-    </label>
-    <label>Quantidade <input name="quantidade" type="number" min="1" value="1"></label>
-    <label>Solicitante <select name="solicitante" id="selSolicitante"></select></label>
-    <label>Urgência
-      <select name="urgencia"><option>Normal</option><option selected>Média</option><option>Alta</option></select>
-    </label>
-    <label>Motivo da solicitação <textarea name="motivo" rows="4" placeholder="Escreva aqui o motivo da solicitação"></textarea></label>
-    <div class="dlg-actions">
-      <button type="button" class="btn btn-light" id="cancelaSolic">Cancelar</button>
-      <button type="submit" class="btn btn-primary" id="btnSalvarSolic">Enviar solicitação</button>
-    </div>
-  </form>
-</dialog>
-
-<dialog id="dlgObra">
-  <form method="dialog" id="formObra" novalidate>
-    <h3>Nova obra</h3>
-    <label>Nome da obra <input name="nome" placeholder="Ex.: Residencial Orla"></label>
-    <label>Engenheiro Responsável <input name="engenheiro" placeholder="Ex.: Eng. Romervan"></label>
-    <label>Responsável pelo Escritório <input name="admin" placeholder="Ex.: Ane"></label>
-    <label>Cidade <input name="cidade" placeholder="Ex.: Salvador - BA"></label>
-    <div class="dlg-actions">
-      <button type="button" class="btn btn-light" id="cancelaObra">Cancelar</button>
-      <button type="submit" class="btn btn-primary">Salvar obra</button>
-    </div>
-  </form>
-</dialog>
-
-<dialog id="dlgRemoverObra">
-  <form method="dialog" id="formRemoverObra" novalidate>
-    <h3>Remover obra</h3>
-    <label>Obra <select name="obra" id="selObraRemover"></select></label>
-    <p class="aviso" id="avisoRemover"></p>
-    <div class="dlg-actions">
-      <button type="button" class="btn btn-light" id="cancelaRemoverObra">Cancelar</button>
-      <button type="submit" class="btn btn-perigo" id="btnConfirmaRemoverObra">Remover obra</button>
-    </div>
-  </form>
-</dialog>
-
-<dialog id="dlgAlterarSenha">
-  <form method="dialog" id="formAlterarSenha" novalidate>
-    <h3>Alterar senha</h3>
-    <label>Senha atual <input type="password" name="atual" autocomplete="current-password"></label>
-    <label>Nova senha <input type="password" name="nova" autocomplete="new-password"></label>
-    <label>Confirmar nova senha <input type="password" name="confirma" autocomplete="new-password"></label>
-    <p class="login-erro" id="erroAlterar" role="alert" hidden></p>
-    <div class="dlg-actions">
-      <button type="button" class="btn btn-light" id="cancelaAlterar">Cancelar</button>
-      <button type="submit" class="btn btn-primary">Salvar nova senha</button>
-    </div>
-  </form>
-</dialog>
-
-<dialog id="dlgCodigo">
-  <form method="dialog" id="formCodigo" novalidate>
-    <h3>Guarde seu código de recuperação</h3>
-    <p class="nota-codigo">Se esquecer a senha, este código é a única forma de voltar ao sistema. Anote em papel ou guarde fora deste computador. Ele aparece só desta vez.</p>
-    <p class="codigo-recuperacao" id="codigoRecuperacao"></p>
-    <div class="dlg-actions">
-      <button type="button" class="btn btn-light" id="copiarCodigo">Copiar</button>
-      <button type="submit" class="btn btn-primary">Anotei, continuar</button>
-    </div>
-  </form>
-</dialog>
-
-<dialog id="dlgItemEstoque">
-  <form method="dialog" id="formItemEstoque" novalidate>
-    <h3 id="tituloDlgItemEstoque">Cadastrar Item no Estoque</h3>
-
-    <label>Setor
-      <select name="setor" id="selSetorItem">
-        <option value="TI">TI</option>
-        <option value="ADM">ADM</option>
-      </select>
-    </label>
-
-    <label id="rotuloTipoRegistro">Classificação <input type="text" id="inputClassificacaoAuto" value="Equipamento" disabled style="background: #f1f1ee; font-weight: 600;"></label>
-
-    <label>Tipo
-      <select name="tipo" id="selTipoItemEstoque" style="transition: all 0.3s ease; animation: fadeInSelect 0.4s ease;">
-        <option>Cabo</option>
-        <option>Câmera</option>
-        <option>Carregador p/ Notebook</option>
-        <option>Carregador p/ Rádio</option>
-        <option>Carregador p/ Rádio Móvel</option>
-        <option>Corrediça</option>
-        <option>CPU</option>
-        <option>Cooler de CPU</option>
-        <option>DVR</option>
-        <option>Fonte de CPU</option>
-        <option>Gabinete</option>
-        <option>HD</option>
-        <option>Impressora</option>
-        <option>Luva</option>
-        <option>Maleta de Ferramentas</option>
-        <option>Monitor</option>
-        <option>Nobreak</option>
-        <option>Notebook</option>
-        <option>Rádio</option>
-        <option>Roteador</option>
-        <option>SSD</option>
-        <option>Starlink</option>
-        <option>Suporte de Monitor</option>
-        <option>Suporte p/ ThinkPad</option>
-        <option>Teclado c/ fio</option>
-        <option>Teclado s/ fio</option>
-        <option>Toner</option>
-        <option>Tubo</option>
-        <option>Outro</option>
-      </select>
-    </label>
-
-    <label>Nome / Descrição <input name="nome" id="inputNomeItemEstoque" placeholder="Ex.: Notebook Dell i5 ou Cabo de Rede 10m"></label>
-
-    <label>Status
-      <select name="status" id="selStatusItemEstoque">
-        <option value="Guardado">Guardado</option>
-        <option value="Em uso">Em uso</option>
-      </select>
-    </label>
-
-    <div class="dlg-actions">
-      <button type="button" class="btn btn-light" id="cancelaItemEstoque">Cancelar</button>
-      <button type="submit" class="btn btn-primary">Salvar Item</button>
-    </div>
-  </form>
-</dialog>
+<dialog id="dlgInstalar"><div class="dbody"><h3>Instalar aplicativo</h3>
+  <div class="inst"><p id="textoInstalar"></p></div>
+  <div class="dact"><button class="btn lt" data-close>Fechar</button><button class="btn prim" id="btnInstalarAgora" hidden>Instalar agora</button></div></div></dialog>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
+<input type="file" id="fileBackup" accept=".json,application/json" hidden>
 
-<script src="script.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+<script>
+  /* ===== Utilitários ===== */
+  const KEY='sistema_financeiro_db';
+  const $=s=>document.querySelector(s),$$=s=>document.querySelectorAll(s);
+  const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const BRL=v=>(Number(v)||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+  const pad=n=>String(n).padStart(2,'0');
+  const hoje=()=>{const d=new Date();return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`};
+  const fmtData=i=>i?String(i).split('-').reverse().join('/'):'-';
+  const soma=a=>a.reduce((t,i)=>t+(Number(i.valor)||0),0);
+  const ICON={
+    renda:'<path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>',
+    entradas:'<path d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>',
+    dividas:'<path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>',
+    gastos:'<path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>',
+    cartoes:'<path d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>',
+    auditoria:'<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6l8-3z"/><path d="M9 12l2 2 4-4"/>',
+    addUser:'<path d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>',
+    apagarUsuario:'<path d="M13 7a4 4 0 11-8 0 4 4 0 018 0zM9 14a6 6 0 00-6 6v1h12v-1a6 6 0 00-6-6zM21 12h-6"/>',
+    trocar:'<path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>',
+    instalar:'<path d="M12 3v11M7 9l5 5 5-5M4 20h16"/>',
+    sino:'<path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>',
+    mais:'<circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/>',
+    lixo:'<path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>',
+    editar:'<path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>',
+    mais2:'<path d="M12 4v16m8-8H4"/>',
+    salvar:'<path d="M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3M12 4v12m0 0l-4-4m4 4l4-4"/>',
+    restaurar:'<path d="M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3M12 16V4m0 0L8 8m4-4l4 4"/>'
+  };
+  const ic=(k,cls='ic')=>`<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICON[k]}</svg>`;
+
+  /* ===== Dados ===== */
+  const CHAVES=['salarios','entradas','dividas','gastos','cartoes','senhas','emails'];
+  const PROIBIDOS=['__proto__','constructor','prototype'];
+  function normalizar(d){
+    if(!d||typeof d!=='object'||Array.isArray(d))d={};
+    d.usuarios=Array.isArray(d.usuarios)?d.usuarios.filter(u=>typeof u==='string'&&u&&!PROIBIDOS.includes(u)):[];
+    d.auditoria=Array.isArray(d.auditoria)?d.auditoria.filter(i=>i&&typeof i==='object'):[];
+    d.currentUser=null;
+    CHAVES.forEach(k=>{d[k]=d[k]&&typeof d[k]==='object'&&!Array.isArray(d[k])?d[k]:{}});
+    return d;
+  }
+  function load(){
+    let d={};try{d=JSON.parse(localStorage.getItem(KEY))||{}}catch(e){}
+    return normalizar(d);
+  }
+  let db=load(),currentTab='renda',previousTab='renda',divTipo='Produto',divEditId=null,entEditId=null,gastoEditId=null,cartEditId=null;
+  const L=k=>db[k][db.currentUser]||[];
+  function save(){try{localStorage.setItem(KEY,JSON.stringify(db))}catch(e){toast('Não foi possível salvar os dados neste navegador.')}}
+  function toast(m,ms=3000){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>t.classList.remove('show'),ms)}
+  function confirmar(titulo,msg,sim='Sim, remover'){return new Promise(res=>{
+    const d=$('#dlgConfirm');$('#cfTitulo').textContent=titulo;$('#cfMsg').textContent=msg;$('#cfSim').textContent=sim;let r=false;
+    $('#cfSim').onclick=()=>{r=true;d.close()};$('#cfNao').onclick=()=>d.close();
+    d.onclose=()=>{d.onclose=null;res(r)};d.showModal()})}
+  function log(acao){
+    if(!db.currentUser)return;const a=new Date();
+    db.auditoria.unshift({data:a.toLocaleDateString('pt-BR'),hora:a.toLocaleTimeString('pt-BR'),usuario:db.currentUser,acao});
+    if(db.auditoria.length>300)db.auditoria.length=300;
+    save();renderAuditoria();
+  }
+
+  /* ===== Abas ===== */
+  const TABS={
+    renda:{t:'Renda Mensal',s:'Resumo do seu orçamento',ex:1,nav:'Renda'},
+    entradas:{t:'Entradas de Dinheiro',s:'Tudo o que entrou',ex:1,nav:'Entradas',add:['+ Nova Entrada','dlgEntrada']},
+    dividas:{t:'Dívidas Fixas',s:'Contas e parcelas a pagar',ex:1,nav:'Dívidas fixas',add:['+ Adicionar Dívida','dlgDivida']},
+    gastos:{t:'Gastos',s:'Despesas do dia a dia',ex:1,nav:'Gastos',add:['+ Registrar Gasto','dlgGasto']},
+    cartoes:{t:'Cartões',s:'Seus cartões cadastrados',ex:1,nav:'Cartões',add:['+ Adicionar Cartão','dlgCartao']},
+    auditoria:{t:'Auditoria do Sistema',s:'Histórico das ações realizadas',ex:1,solo:1,nav:'Auditoria'},
+    apagarUsuario:{t:'Apagar Usuário',s:'Remova usuários do sistema',nav:'Apagar usuário'}
+  };
+  function montarNav(){
+    $('#navSide').innerHTML=Object.keys(TABS).filter(k=>k!=='apagarUsuario').map(k=>`<button class="nbtn" data-tab="${k}" title="${TABS[k].nav}">${ic(k)}<span class="tx">${TABS[k].nav}</span></button>`).join('')+
+            `<button class="nbtn" id="btnNovoUsuarioNav" title="Adicionar usuário">${ic('addUser')}<span class="tx">Adicionar usuário</span></button>
+    <button class="nbtn" data-tab="apagarUsuario" title="Apagar usuário">${ic('apagarUsuario')}<span class="tx">Apagar usuário</span></button>
+    <div class="div"></div>
+    <button class="nbtn" id="btnSalvarBackup" title="Salvar backup">${ic('salvar')}<span class="tx">Salvar backup</span></button>
+    <button class="nbtn" id="btnRestaurarBackup" title="Restaurar backup">${ic('restaurar')}<span class="tx">Restaurar backup</span></button>
+    <div class="div"></div>
+    <button class="nbtn" id="btnInstalarApp" hidden title="Instalar no celular">${ic('instalar')}<span class="tx">Instalar no celular</span></button>
+`;
+    $('#bnav').innerHTML=['renda','entradas','dividas','gastos','cartoes'].map(k=>`<button class="bi" data-tab="${k}">${ic(k)}<span>${TABS[k].nav.replace('Dívidas fixas','Dívidas')}</span></button>`).join('')+`<button class="bi" id="btnMais">${ic('mais')}<span>Mais</span></button>`;
+    $('#btnNovoUsuarioLogin').innerHTML=ic('mais2','ic')+' Adicionar novo usuário';
+    $('#btnRestaurarLogin').innerHTML=ic('restaurar')+' Restaurar backup';
+    $('#btnInstalarLogin').innerHTML=ic('instalar')+' Instalar aplicativo no celular';
+    $('.bell').innerHTML=ic('sino')+'<span id="badge" hidden>0</span>';
+  }
+  function switchTab(id){
+    if(id!==currentTab){previousTab=currentTab;currentTab=id}
+    $$('.tab').forEach(e=>e.hidden=true);$('#tab-'+id).hidden=false;
+    $$('[data-tab]').forEach(b=>b.classList.toggle('ativo',b.dataset.tab===id));
+    const c=TABS[id];$('#tbTitulo').textContent=c.t;
+    $('#tbSub').textContent=c.s+' · '+new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+    const add=$('#btnAdd');add.hidden=!c.add;if(c.add)add.textContent=c.add[0];
+    $('#ddXls').hidden=$('#ddPdf').hidden=!c.ex;
+    $$('.menu [data-geral]').forEach(b=>b.hidden=!!c.solo);
+    $('#btnVoltar').hidden=id==='renda';
+    $('#sidebar').classList.remove('aberta');
+    if(id==='apagarUsuario')renderApagar();
+    $('.main').scrollTo?.({top:0});window.scrollTo(0,0);
+  }
+
+  /* ===== Login / Usuários ===== */
+  function renderLogin(){
+    const l=$('#userList');
+    l.innerHTML=db.usuarios.length?db.usuarios.map(u=>`<button class="user-btn" data-user="${esc(u)}"><span><i></i>${esc(u)}</span>›</button>`).join(''):'<p style="opacity:.85;font-size:.85rem">Nenhum usuário cadastrado. Crie um abaixo.</p>';
+  }
+  async function hashSenha(s,salt){
+    const t=salt+':'+s;
+    if(window.crypto&&crypto.subtle){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t));return 's_'+[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
+    let h=0;for(let i=0;i<t.length;i++){h=((h<<5)-h)+t.charCodeAt(i);h|=0}return 'h_'+Math.abs(h).toString(36);
+  }
+  function novoSalt(){
+    const a=window.crypto&&crypto.getRandomValues?crypto.getRandomValues(new Uint8Array(16)):Array.from({length:16},()=>Math.random()*256|0);
+    return [...a].map(x=>x.toString(16).padStart(2,'0')).join('');
+  }
+  async function criarSenha(u,s){const salt=novoSalt();db.senhas[u]={salt,hash:await hashSenha(s,salt)};save()}
+  async function checarSenha(u,s){const r=db.senhas[u];return !!r&&(await hashSenha(s,r.salt))===r.hash}
+  let userAlvo=null,senhaModo='entrar';
+  function pedirSenha(u,modo='entrar'){
+    userAlvo=u;senhaModo=modo;const nova=!db.senhas[u];
+    $('#fSenha').reset();$('#erroSenha').hidden=true;
+    $('#senhaTitulo').textContent=nova?'Criar senha':modo==='apagar'?'Confirmar senha':'Digite sua senha';
+    $('#senhaSub').textContent=nova?`O usuário "${u}" ainda não tem senha. Defina uma para proteger seus dados.`:modo==='apagar'?`Digite a senha de "${u}" para apagar este usuário.`:`Entrando como "${u}".`;
+    $('#senhaConfBox').hidden=!nova;$('#senhaIn2').required=nova;
+    $('#senhaEmailBox').hidden=!nova;$('#senhaEmail').value=db.emails[u]||'';
+    $('#btnEsqueci').hidden=nova||modo!=='entrar';
+    $('#senhaBtn').textContent=nova?'Criar senha e entrar':modo==='apagar'?'Confirmar':'Entrar';
+    $('#dlgSenha').showModal();setTimeout(()=>$('#senhaIn').focus(),60);
+  }
+  $('#fSenha').onsubmit=async e=>{
+    e.preventDefault();const u=userAlvo,s=$('#senhaIn').value;if(!u)return;
+    const erro=m=>{const el=$('#erroSenha');el.textContent=m;el.hidden=false};
+    if(!db.senhas[u]){
+      if(s.length<4)return erro('A senha deve ter no mínimo 4 caracteres.');
+      if(s!==$('#senhaIn2').value)return erro('As senhas não conferem.');
+      const em=$('#senhaEmail').value.trim();if(!emailOk(em))return erro('Informe um e-mail válido para recuperação.');
+      await criarSenha(u,s);db.emails[u]=em;save();
+    }else if(!(await checarSenha(u,s))){$('#senhaIn').value='';$('#senhaIn').focus();return erro('Senha incorreta. Acesso não permitido.')}
+    const modo=senhaModo;$('#dlgSenha').close();userAlvo=null;
+    if(modo==='apagar')await removerUsuario(u);else loginUser(u);
+  };
+  /* ===== Recuperação de senha por e-mail (via EmailJS) =====
+     Preencha com os dados do seu painel em emailjs.com (veja as instruções). */
+  const EMAILJS={service:'service_h17pigq',template:'template_nt93dtt',key:'97xHs0bElecCe3m1H'};
+  const emailOk=e=>/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(e);
+  const mascara=e=>{const [a,b]=e.split('@');return a.slice(0,2)+'***@'+b};
+  let reset=null;
+  async function enviarCodigo(u){ /* retorna null se enviou, ou o texto do erro */
+    const email=db.emails[u];
+    if(!email)return 'Este usuário não tem e-mail cadastrado, então não é possível recuperar a senha.';
+    if(!EMAILJS.service||!EMAILJS.template||!EMAILJS.key)return 'O envio de e-mail ainda não foi configurado no sistema (veja EMAILJS no código).';
+    if(!navigator.onLine)return 'Sem internet. Conecte-se para receber o código.';
+    const a=new Uint32Array(1);crypto.getRandomValues(a);const code=String(100000+a[0]%900000),salt=novoSalt();
+    try{
+      const r=await fetch('https://api.emailjs.com/api/v1.0/email/send',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({service_id:EMAILJS.service,template_id:EMAILJS.template,user_id:EMAILJS.key,template_params:{email:email,to_email:email,to_name:u,code,passcode:code,time:new Date(Date.now()+15*60000).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),app_name:'Sistema Financeiro - Família Bembem'}})});
+      if(!r.ok)return `Não foi possível enviar o e-mail (erro ${r.status}): ${await r.text()}`;
+    }catch(e){return 'Falha de conexão ao enviar o e-mail.'}
+    reset={u,salt,hash:await hashSenha(code,salt),exp:Date.now()+15*60000,tent:0};
+    return null;
+  }
+  $('#btnEsqueci').onclick=async()=>{
+    const u=userAlvo;if(!u)return;const b=$('#btnEsqueci');b.disabled=true;b.textContent='Enviando…';
+    const err=await enviarCodigo(u);b.disabled=false;b.textContent='Esqueci minha senha';
+    if(err){const el=$('#erroSenha');el.textContent=err;el.hidden=false;return}
+    $('#dlgSenha').close();$('#fReset').reset();$('#erroReset').hidden=true;
+    $('#resetSub').textContent=`Enviamos um código de 6 dígitos para ${mascara(db.emails[u])}. Ele vale por 15 minutos.`;
+    $('#dlgReset').showModal();
+  };
+  $('#fReset').onsubmit=async e=>{
+    e.preventDefault();const erro=m=>{const el=$('#erroReset');el.textContent=m;el.hidden=false};
+    if(!reset)return erro('Solicite um novo código na tela de entrada.');
+    if(Date.now()>reset.exp){reset=null;return erro('O código expirou. Peça um novo.')}
+    if(reset.tent>=5){reset=null;return erro('Muitas tentativas. Peça um novo código.')}
+    const n=$('#resetNova').value;
+    if(n.length<4)return erro('A senha deve ter no mínimo 4 caracteres.');
+    if(n!==$('#resetNova2').value)return erro('As senhas não conferem.');
+    reset.tent++;
+    if((await hashSenha($('#resetCodigo').value.trim(),reset.salt))!==reset.hash)return erro('Código incorreto.');
+    const u=reset.u;reset=null;await criarSenha(u,n);$('#dlgReset').close();
+    const a=new Date();db.auditoria.unshift({data:a.toLocaleDateString('pt-BR'),hora:a.toLocaleTimeString('pt-BR'),usuario:u,acao:'Redefiniu a senha por e-mail'});save();renderAuditoria();
+    toast('Senha alterada! Entre com a nova senha.',5000);
+  };
+  $('#btnEmail').onclick=()=>{$$('.menu').forEach(m=>m.hidden=true);$('#erroEmail').hidden=true;$('#emailIn').value=db.emails[db.currentUser]||'';$('#dlgEmail').showModal()};
+  $('#fEmail').onsubmit=e=>{
+    e.preventDefault();const v=$('#emailIn').value.trim();
+    if(!emailOk(v)){const el=$('#erroEmail');el.textContent='Informe um e-mail válido.';el.hidden=false;return}
+    db.emails[db.currentUser]=v;save();$('#dlgEmail').close();log('Atualizou o e-mail de recuperação');toast('E-mail de recuperação salvo.');
+  };
+  function loginUser(u){
+    db.currentUser=u;
+    ['entradas','dividas','gastos','cartoes'].forEach(k=>{if(!Array.isArray(db[k][u]))db[k][u]=[]});
+    if(typeof db.salarios[u]!=='number')db.salarios[u]=0;
+    document.body.classList.add('auth');
+    $('#userNameDisplay').textContent=u;$('#userInitial').textContent=u.charAt(0).toUpperCase();
+    if('Notification' in window&&Notification.permission==='default'){try{Notification.requestPermission()}catch(e){}}
+    log('Fez login no sistema');refresh();switchTab('renda');atualizarInstalar();
+  }
+  function logout(){log('Saiu do sistema');$$('.menu').forEach(m=>m.hidden=true);db.currentUser=null;document.body.classList.remove('auth');$('#sidebar').classList.remove('aberta');renderLogin();window.scrollTo(0,0)}
+  function renderApagar(){
+    $('#listaApagar').innerHTML=db.usuarios.length?db.usuarios.map(u=>`<div class="urow"><b>${esc(u)}</b><button class="btn dng sm" data-apagar="${esc(u)}">Apagar</button></div>`).join(''):'<p style="color:var(--m500)">Nenhum usuário cadastrado.</p>';
+  }
+  async function apagarUsuario(u){
+    if(db.senhas[u]){pedirSenha(u,'apagar');return}
+    await removerUsuario(u);
+  }
+  async function removerUsuario(u){
+    if(!await confirmar('Apagar usuário',`Deseja realmente apagar o usuário "${u}" e todos os seus dados? Isso não pode ser desfeito.`))return;
+    const eraEle=db.currentUser===u;if(!eraEle)log(`Apagou o usuário ${u}`);
+    db.usuarios=db.usuarios.filter(x=>x!==u);
+    ['salarios','entradas','dividas','gastos','cartoes','senhas','emails'].forEach(k=>delete db[k][u]);
+    save();toast(`Usuário "${u}" apagado.`);
+    if(eraEle)logout();else{renderApagar();renderLogin()}
+  }
+
+  /* ===== Backup (salvar / restaurar) ===== */
+  const BACKUP_APP='sistema-financeiro-bembem';
+  function salvarBackup(){
+    if(!db.usuarios.length){toast('Não há dados para salvar.');return}
+    log('Salvou um backup dos dados');
+    const {currentUser,...dados}=db;
+    const pacote={app:BACKUP_APP,versao:1,criadoEm:new Date().toISOString(),dados};
+    const d=new Date(),nome=`backup_financeiro_${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}_${pad(d.getHours())}-${pad(d.getMinutes())}.json`;
+    const url=URL.createObjectURL(new Blob([JSON.stringify(pacote)],{type:'application/json'}));
+    const a=document.createElement('a');a.href=url;a.download=nome;document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),5000);
+    toast('Backup salvo: '+nome,5000);
+  }
+  async function lerBackup(file){
+    if(!file)return;
+    if(file.size>20*1024*1024){toast('Arquivo grande demais para ser um backup.');return}
+    let pac;
+    try{pac=JSON.parse(await file.text())}catch(e){toast('Arquivo inválido: não é um backup do sistema.');return}
+    if(!pac||pac.app!==BACKUP_APP||!pac.dados||typeof pac.dados!=='object'){toast('Esse arquivo não é um backup deste sistema.');return}
+    const novo=normalizar(pac.dados),dt=new Date(pac.criadoEm),quando=isNaN(dt)?'data desconhecida':dt.toLocaleString('pt-BR');
+    if(!await confirmar('Restaurar backup',`Backup de ${quando}, com ${novo.usuarios.length} usuário(s). Isso vai SUBSTITUIR todos os dados deste aparelho pelos do backup, e os dados atuais serão perdidos. Deseja continuar?`,'Sim, restaurar'))return;
+    const quem=db.currentUser||'Sistema',a=new Date();
+    db=novo;db.currentUser=null;
+    db.auditoria.unshift({data:a.toLocaleDateString('pt-BR'),hora:a.toLocaleTimeString('pt-BR'),usuario:quem,acao:`Restaurou um backup (de ${quando})`});
+    if(db.auditoria.length>300)db.auditoria.length=300;
+    save();
+    document.body.classList.remove('auth');$$('.menu').forEach(m=>m.hidden=true);$('#sidebar').classList.remove('aberta');
+    renderLogin();renderAuditoria();window.scrollTo(0,0);
+    toast('Backup restaurado! Selecione seu usuário para entrar.',6000);
+  }
+
+  /* ===== Renderização ===== */
+  function refresh(){renderRenda();renderEntradas();renderDividas();renderGastos();renderCartoes();renderAuditoria();checkVencimentos()}
+  function renderRenda(){
+    const s=db.salarios[db.currentUser]||0,e=soma(L('entradas')),d=soma(L('dividas')),g=soma(L('gastos')),saldo=s+e-d-g;
+    $('#salarioDisplay').textContent=BRL(s);
+    $('#kpis').innerHTML=[['Total de entradas',e,'g'],['Total de dívidas fixas',d,'r'],['Total de gastos',g,'a'],['Saldo estimado',saldo,saldo<0?'r':'g']]
+            .map(([t,v,c])=>`<div class="kpi ${c}"><span class="lbl">${t}</span><b>${BRL(v)}</b></div>`).join('');
+  }
+  const delBtn=(k,id)=>`<button class="ib" data-del="${k}" data-id="${id}" title="Remover" aria-label="Remover">${ic('lixo','ic" style="width:17px;height:17px')}</button>`;
+  function vazioRow(cols,msg){return `<tr><td colspan="${cols}" class="vazio">${msg}</td></tr>`}
+  function renderEntradas(){
+    const a=L('entradas');
+    $('#bEntradas').innerHTML=a.length?a.map(i=>`<tr><td><b>${esc(i.desc)}</b></td><td>${esc(i.forma)}</td><td style="color:var(--g);font-weight:700">${BRL(i.valor)}</td><td>${fmtData(i.data)}</td><td class="r">${edBtn('entradas',i.id)}${delBtn('entradas',i.id)}</td></tr>`).join(''):vazioRow(5,'Nenhuma entrada cadastrada.');
+  }
+  const NOMES_ED={dividas:'dívida',entradas:'entrada',gastos:'gasto',cartoes:'cartão'};
+  const edBtn=(k,id)=>`<button class="ib ed" data-edit="${k}" data-id="${id}" title="Editar ${NOMES_ED[k]}" aria-label="Editar ${NOMES_ED[k]}">${ic('editar','ic" style="width:17px;height:17px')}</button>`;
+  const atrasada=d=>{const v=d.vencimento||d.data;return !d.pago&&v&&new Date(v+'T23:59:59')<new Date()};
+  function renderDividas(){
+    const a=L('dividas');
+    $('#bDividas').innerHTML=a.length?a.map(i=>{
+      const v=i.vencimento||i.data,at=atrasada(i);
+      const st=i.pago?`<span class="tag ok">Pago</span><button class="lk" data-pago="${i.id}">Desfazer</button>`
+              :`<div class="row" style="gap:8px">${at?'<span class="tag at">Dívida pendente</span>':''}<button class="btn prim sm" data-pago="${i.id}" style="background:var(--g);border-color:var(--g)">Marcar pago</button></div>`;
+      const info=[i.tipo,i.forma,i.parcelado==='Sim'?`${i.vezes}x`:''].filter(Boolean).map(esc).join(' • ');
+      return `<tr class="${at?'atr':''}"><td><b>${esc(i.titulo)}</b><small>${info}</small></td><td style="color:var(--r);font-weight:700">${BRL(i.valor)}</td><td>${fmtData(v)}</td><td>${st}</td><td class="r">${edBtn('dividas',i.id)}${delBtn('dividas',i.id)}</td></tr>`}).join(''):vazioRow(5,'Nenhuma dívida fixa cadastrada.');
+  }
+  function renderGastos(){
+    const a=L('gastos');
+    $('#bGastos').innerHTML=a.length?a.map(i=>`<tr><td><b>${esc(i.desc)}</b></td><td>${esc(i.categoria)}</td><td>${esc(i.forma)}${i.parcelado==='Sim'?`<small>${i.vezes}x de ${BRL(i.valor/i.vezes)}</small>`:''}</td><td style="color:var(--a);font-weight:700">${BRL(i.valor)}</td><td>${fmtData(i.data)}</td><td class="r">${edBtn('gastos',i.id)}${delBtn('gastos',i.id)}</td></tr>`).join(''):vazioRow(6,'Nenhum gasto registrado.');
+  }
+  function renderCartoes(){
+    const a=L('cartoes');
+    $('#gCartoes').innerHTML=a.length?a.map(c=>`<div class="cc${clsCartao(c)}"${varsCartao(c)}><div class="row" style="justify-content:space-between;align-items:flex-start"><div><small>${esc(c.banco)}</small><h4 style="font-size:1rem">${esc(c.nome)}</h4></div><div class="row" style="gap:2px;flex-wrap:nowrap">${edBtn('cartoes',c.id)}${delBtn('cartoes',c.id)}</div></div>
+   <div><small>${esc(c.tipo)}</small><div class="row" style="justify-content:space-between;margin-top:6px"><span class="num">•••• ${esc(c.final)}</span><span style="font-size:.76rem">Limite: ${BRL(c.limite)}</span></div></div></div>`).join(''):'<p class="vazio" style="grid-column:1/-1">Nenhum cartão cadastrado.</p>';
+  }
+  function renderAuditoria(){
+    $('#bAudit').innerHTML=db.auditoria.length?db.auditoria.map(i=>`<tr><td>${esc(i.data)}</td><td>${esc(i.hora)}</td><td><b>${esc(i.usuario)}</b></td><td>${esc(i.acao)}</td></tr>`).join(''):vazioRow(4,'Nenhum registro de auditoria.');
+  }
+
+  /* ===== Notificações de vencimento ===== */
+  function notificar(t,b){
+    if(!('Notification' in window)||Notification.permission!=='granted')return;
+    const k='n:'+t+b;if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,'1');
+    const fallback=()=>{try{new Notification(t,{body:b,icon:'icon-192.png'})}catch(e){}};
+    if('serviceWorker' in navigator&&navigator.serviceWorker.controller)navigator.serviceWorker.ready.then(r=>r.showNotification(t,{body:b,icon:'icon-192.png'})).catch(fallback);else fallback();
+  }
+  function checkVencimentos(){
+    const now=new Date(),itens=[];
+    L('dividas').forEach(d=>{
+      const v=d.vencimento||d.data;if(d.pago||!v)return;const fim=new Date(v+'T23:59:59');
+      if(fim<now)itens.push(`<div class="nt at"><b>Dívida pendente:</b> <i>${esc(d.titulo)}</i> venceu em ${fmtData(v)}.</div>`);
+      else if((fim-now)/864e5<=3){itens.push(`<div class="nt"><b>Atenção:</b> a dívida <i>${esc(d.titulo)}</i> vence em ${fmtData(v)}.</div>`);notificar('Alerta de vencimento',`A dívida "${d.titulo}" vence em ${fmtData(v)}.`)}
+    });
+    $('#notifList').innerHTML=itens.join('')||'<p style="text-align:center;color:var(--m500);font-size:.78rem;padding:8px">Nenhuma notificação no momento.</p>';
+    const b=$('#badge');b.textContent=itens.length;b.hidden=!itens.length;
+  }
+
+  /* ===== Formulários ===== */
+  const pagto=p=>`<label>Forma de pagamento<select id="${p}Forma"><option>Pix</option><option>Dinheiro Físico</option><option>Transferência</option><option>Boleto Bancário</option><option>Código de Barras</option><option>Cartão</option></select></label>
+<div id="${p}CartaoBox" class="grid2" hidden><label>Cartão<select id="${p}CartaoSel"></select></label><label>Tipo de cartão<select id="${p}TipoCartao"><option>Crédito</option><option>Débito</option></select></label></div>
+<label>Parcelado?<select id="${p}Parcelado"><option>Não</option><option>Sim</option></select></label>
+<label id="${p}QtdBox" hidden>Número de parcelas<input type="number" id="${p}Qtd" min="2" max="360" value="2"></label>`;
+  function ajusta(p){
+    const f=$('#'+p+'Forma').value,cart=f==='Cartão';$('#'+p+'CartaoBox').hidden=!cart;
+    const pode=!(f==='Pix'||(cart&&$('#'+p+'TipoCartao').value==='Débito')),s=$('#'+p+'Parcelado');
+    if(!pode)s.value='Não';s.disabled=!pode;const sim=s.value==='Sim';$('#'+p+'QtdBox').hidden=!sim;
+    if(p==='div'){$('#divValorLbl').textContent=sim?'Valor de cada parcela (R$)':'Valor (R$)';previewDiv()}
+    else $('#gastoValorLbl').textContent=sim?'Valor total (R$)':'Valor total à vista (R$)';
+  }
+  function cartaoOpts(){
+    const a=L('cartoes'),h=a.length?a.map(c=>`<option value="${c.id}">${esc(c.nome)} - ${esc(c.banco)} (•••• ${esc(c.final)})</option>`).join(''):'<option value="">Cadastre um cartão primeiro</option>';
+    $('#divCartaoSel').innerHTML=h;$('#gastoCartaoSel').innerHTML=h;
+  }
+  function formaTexto(p){
+    const f=$('#'+p+'Forma').value;if(f!=='Cartão')return f;
+    const c=L('cartoes').find(x=>String(x.id)===$('#'+p+'CartaoSel').value),t=$('#'+p+'TipoCartao').value;
+    if(!c){toast('Cadastre e selecione um cartão.');return null}
+    if((c.tipo==='Apenas Crédito'&&t==='Débito')||(c.tipo==='Apenas Débito'&&t==='Crédito')){toast(`Este cartão é "${c.tipo}".`);return null}
+    return `Cartão ${t} - ${c.nome}`;
+  }
+  function calcVenc(ini,parc,vezes){
+    if(!ini)return'';if(parc!=='Sim')return ini;
+    const d=new Date(ini+'T12:00:00');d.setMonth(d.getMonth()+vezes);return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  }
+  function previewDiv(){
+    const p=$('#divPrev'),v=parseInt($('#divQtd').value)||1;
+    if($('#divData').value&&$('#divParcelado').value==='Sim'&&v>1){p.textContent='Previsão de término: '+fmtData(calcVenc($('#divData').value,'Sim',v));p.hidden=false}else p.hidden=true;
+  }
+  function setTipo(t){divTipo=t;$('#tpProduto').classList.toggle('on',t==='Produto');$('#tpServico').classList.toggle('on',t==='Serviço')}
+  function abrir(id){
+    const d=$('#'+id),f=d.querySelector('form');if(f)f.reset();
+    if(id==='dlgEntrada'){entEditId=null;$('#entTituloDlg').textContent='Nova entrada de dinheiro';$('#entSalvarBtn').textContent='Salvar';$('#entData').value=hoje()}
+    if(id==='dlgDivida'){divEditId=null;$('#divTituloDlg').textContent='Adicionar dívida fixa';$('#divSalvarBtn').textContent='Salvar';$('#divData').value=hoje();setTipo('Produto');cartaoOpts();ajusta('div')}
+    if(id==='dlgGasto'){gastoEditId=null;$('#gastoTituloDlg').textContent='Registrar gasto';$('#gastoSalvarBtn').textContent='Salvar';$('#gastoData').value=hoje();cartaoOpts();ajusta('gasto')}
+    if(id==='dlgCartao'){cartEditId=null;$('#cartTituloDlg').textContent='Adicionar cartão';$('#cartSalvarBtn').textContent='Salvar';ajustaBanco()}
+    d.showModal();
+  }
+  function preencherPagto(p,o){
+    const m=/^Cartão (Crédito|Débito) - (.*)$/.exec(o.forma||'');
+    if(m){
+      $('#'+p+'Forma').value='Cartão';$('#'+p+'TipoCartao').value=m[1];
+      const c=L('cartoes').find(x=>x.nome===m[2]);if(c)$('#'+p+'CartaoSel').value=String(c.id);
+    }else $('#'+p+'Forma').value=o.forma||'Pix';
+    if(!$('#'+p+'Forma').value)$('#'+p+'Forma').selectedIndex=0;
+    $('#'+p+'Parcelado').value=o.parcelado==='Sim'?'Sim':'Não';
+    $('#'+p+'Qtd').value=o.parcelado==='Sim'?(o.vezes||2):2;
+    ajusta(p);
+  }
+  function editarDivida(id){
+    const d=L('dividas').find(x=>String(x.id)===String(id));if(!d)return;
+    abrir('dlgDivida');
+    divEditId=String(d.id);$('#divTituloDlg').textContent='Editar dívida fixa';$('#divSalvarBtn').textContent='Salvar alterações';
+    $('#divTitulo').value=d.titulo||'';setTipo(d.tipo==='Serviço'?'Serviço':'Produto');
+    $('#divValor').value=d.valor;$('#divData').value=d.data||hoje();
+    preencherPagto('div',d);
+  }
+  function editarEntrada(id){
+    const x=L('entradas').find(i=>String(i.id)===String(id));if(!x)return;
+    abrir('dlgEntrada');
+    entEditId=String(x.id);$('#entTituloDlg').textContent='Editar entrada';$('#entSalvarBtn').textContent='Salvar alterações';
+    $('#entDesc').value=x.desc||'';$('#entForma').value=x.forma;if(!$('#entForma').value)$('#entForma').selectedIndex=0;
+    $('#entValor').value=x.valor;$('#entData').value=x.data||hoje();
+  }
+  function editarGasto(id){
+    const g=L('gastos').find(i=>String(i.id)===String(id));if(!g)return;
+    abrir('dlgGasto');
+    gastoEditId=String(g.id);$('#gastoTituloDlg').textContent='Editar gasto';$('#gastoSalvarBtn').textContent='Salvar alterações';
+    $('#gastoDesc').value=g.desc||'';$('#gastoCat').value=g.categoria;if(!$('#gastoCat').value)$('#gastoCat').selectedIndex=0;
+    $('#gastoValor').value=g.valor;$('#gastoData').value=g.data||hoje();
+    preencherPagto('gasto',g);
+  }
+  function editarCartao(id){
+    const c=L('cartoes').find(i=>String(i.id)===String(id));if(!c)return;
+    abrir('dlgCartao');
+    cartEditId=String(c.id);$('#cartTituloDlg').textContent='Editar cartão';$('#cartSalvarBtn').textContent='Salvar alterações';
+    $('#cartaoNome').value=c.nome||'';
+    const b=BANCOS.find(x=>x.k===chaveBanco(c.banco));
+    if(b)$('#cartaoBanco').value=b.n;else{$('#cartaoBanco').value='Outro';$('#cartaoBancoOutro').value=c.banco||''}
+    $('#cartaoTipo').value=c.tipo;$('#cartaoFinal').value=c.final;$('#cartaoLimite').value=c.limite;
+    if(/^#[0-9a-f]{6}$/i.test(c.cor||''))$('#cartaoCor').value=c.cor;
+    ajustaBanco();
+  }
+  function editar(k,id){({dividas:editarDivida,entradas:editarEntrada,gastos:editarGasto,cartoes:editarCartao}[k]||(()=>{}))(id)}
+
+  /* ===== Cores dos cartões ===== */
+  const BANCOS=[
+    {k:'nubank',n:'Nubank',c:['#8a05be','#4b0082']},
+    {k:'inter',n:'Inter',c:['#ff8c1a','#e65c00']},
+    {k:'itau',n:'Itaú',c:['#e8590c','#a8410a']},
+    {k:'bradesco',n:'Bradesco',c:['#d32f2f','#8e1b1b']},
+    {k:'bradescoBlack',n:'Bradesco Black',c:['#3a3a3a','#000000']},
+    {k:'caixa',n:'Caixa',c:['#1e6fd9','#0b3d91']},
+    {k:'alimentacao',n:'Alimentação',c:['#2e7d32','#1b5e20']}
+  ];
+  const semAcento=t=>String(t||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+  function chaveBanco(b){
+    const t=semAcento(b);
+    if(/nubank/.test(t))return 'nubank';
+    if(/bradesco/.test(t))return /black/.test(t)?'bradescoBlack':'bradesco';
+    if(/\binter\b/.test(t))return 'inter';
+    if(/itau/.test(t))return 'itau';
+    if(/caixa/.test(t))return 'caixa';
+    if(/alimenta/.test(t))return 'alimentacao';
+    return null;
+  }
+  const HEX=/^#[0-9a-f]{6}$/i;
+  const lumin=h=>{const n=parseInt(h.slice(1),16);return .299*(n>>16)+.587*(n>>8&255)+.114*(n&255)};
+  function escurecer(h,f=.35){const n=parseInt(h.slice(1),16),m=v=>Math.round(v*(1-f)).toString(16).padStart(2,'0');return '#'+m(n>>16)+m(n>>8&255)+m(n&255)}
+  function estiloCartao(c){
+    const b=BANCOS.find(x=>x.k===chaveBanco(c.banco));if(!b)return null;
+    let [c1,c2]=b.c;
+    if(b.k==='alimentacao'&&HEX.test(c.cor||'')){c1=c.cor;c2=escurecer(c.cor)}
+    return {c1,c2,claro:(lumin(c1)+lumin(c2))/2>150};
+  }
+  const clsCartao=c=>{const e=estiloCartao(c);return e&&e.claro?' claro':''};
+  const varsCartao=c=>{const e=estiloCartao(c);return e?` style="--c1:${e.c1};--c2:${e.c2}"`:''};
+  function ajustaBanco(){
+    const v=$('#cartaoBanco').value;
+    $('#cartaoOutroBox').hidden=v!=='Outro';$('#cartaoBancoOutro').required=v==='Outro';
+    $('#cartaoCorBox').hidden=v!=='Alimentação';
+    const e=estiloCartao({banco:v==='Outro'?'':v,cor:$('#cartaoCor').value}),pv=$('#cartaoPrev');
+    if(e){pv.style.setProperty('--c1',e.c1);pv.style.setProperty('--c2',e.c2)}else{pv.style.removeProperty('--c1');pv.style.removeProperty('--c2')}
+  }
+  document.addEventListener('change',e=>{if(e.target.id==='cartaoBanco')ajustaBanco()});
+  document.addEventListener('input',e=>{if(e.target.id==='cartaoCor')ajustaBanco()});
+  $('#pgDiv').innerHTML=pagto('div');$('#pgGasto').innerHTML=pagto('gasto');
+
+  $('#fUsuario').onsubmit=async e=>{
+    e.preventDefault();const n=$('#newUserName').value.trim(),s=$('#newUserPass').value,er=$('#erroNovoUser');
+    const falha=m=>{er.textContent=m;er.hidden=false};er.hidden=true;if(!n)return;
+    if(db.usuarios.some(u=>u.toLowerCase()===n.toLowerCase()))return falha('Esse usuário já existe!');
+    if(s.length<4)return falha('A senha deve ter no mínimo 4 caracteres.');
+    if(s!==$('#newUserPass2').value)return falha('As senhas não conferem.');
+    const em=$('#newUserEmail').value.trim();if(!emailOk(em))return falha('Informe um e-mail válido.');
+    await criarSenha(n,s);db.emails[n]=em;
+    db.usuarios.push(n);save();$('#dlgUsuario').close();renderLogin();if(db.currentUser){log(`Cadastrou o usuário ${n}`);if(currentTab==='apagarUsuario')renderApagar()}toast('Usuário cadastrado.');
+  };
+  $('#fEntrada').onsubmit=e=>{
+    e.preventDefault();const ed=entEditId!==null?L('entradas').find(x=>String(x.id)===entEditId):null;const o={id:ed?ed.id:Date.now(),desc:$('#entDesc').value.trim(),forma:$('#entForma').value,valor:parseFloat($('#entValor').value),data:$('#entData').value};
+    if(!o.desc||!(o.valor>0)){toast('Informe a descrição e um valor maior que zero.');return}
+    if(ed){const antes=ed.valor;Object.assign(ed,o);save();$('#dlgEntrada').close();refresh();log(`Editou entrada: ${o.desc} (${antes!==o.valor?BRL(antes)+' → ':''}${BRL(o.valor)})`);toast('Entrada atualizada.');return}
+    L('entradas').push(o);save();$('#dlgEntrada').close();refresh();log(`Adicionou entrada: ${o.desc} (${BRL(o.valor)})`);toast('Entrada salva.');
+  };
+  $('#fDivida').onsubmit=e=>{
+    e.preventDefault();const forma=formaTexto('div');if(forma===null)return;
+    const parcelado=$('#divParcelado').value,vezes=parcelado==='Sim'?Math.max(2,parseInt($('#divQtd').value)||2):1;
+    const ed=divEditId!==null?L('dividas').find(x=>String(x.id)===divEditId):null;
+    const o={id:ed?ed.id:Date.now(),titulo:$('#divTitulo').value.trim(),tipo:divTipo,forma,valor:parseFloat($('#divValor').value),data:$('#divData').value,parcelado,vezes,pago:ed?!!ed.pago:false};
+    if(!o.titulo||!(o.valor>0)){toast('Informe o título e um valor maior que zero.');return}
+    o.vencimento=calcVenc(o.data,parcelado,vezes);
+    if(ed){
+      const antes=ed.valor;Object.assign(ed,o);save();$('#dlgDivida').close();refresh();
+      log(`Editou dívida fixa: ${o.titulo} (${antes!==o.valor?BRL(antes)+' → ':''}${BRL(o.valor)})`);toast('Dívida atualizada.');return;
+    }
+    L('dividas').push(o);save();$('#dlgDivida').close();refresh();log(`Adicionou dívida fixa: ${o.titulo} (${BRL(o.valor)})`);toast('Dívida salva.');
+  };
+  $('#fGasto').onsubmit=e=>{
+    e.preventDefault();const forma=formaTexto('gasto');if(forma===null)return;
+    const parcelado=$('#gastoParcelado').value,vezes=parcelado==='Sim'?Math.max(2,parseInt($('#gastoQtd').value)||2):1;
+    const ed=gastoEditId!==null?L('gastos').find(x=>String(x.id)===gastoEditId):null;const o={id:ed?ed.id:Date.now(),desc:$('#gastoDesc').value.trim(),categoria:$('#gastoCat').value,forma,parcelado,vezes,valor:parseFloat($('#gastoValor').value),data:$('#gastoData').value};
+    if(!o.desc||!(o.valor>0)){toast('Informe a descrição e um valor maior que zero.');return}
+    if(ed){const antes=ed.valor;Object.assign(ed,o);save();$('#dlgGasto').close();refresh();log(`Editou gasto: ${o.desc} (${antes!==o.valor?BRL(antes)+' → ':''}${BRL(o.valor)})`);toast('Gasto atualizado.');return}
+    L('gastos').push(o);save();$('#dlgGasto').close();refresh();log(`Registrou gasto: ${o.desc} (${BRL(o.valor)})`);toast('Gasto registrado.');
+  };
+  $('#fCartao').onsubmit=e=>{
+    e.preventDefault();
+    const sel=$('#cartaoBanco').value,banco=sel==='Outro'?$('#cartaoBancoOutro').value.trim():sel;
+    const ed=cartEditId!==null?L('cartoes').find(x=>String(x.id)===cartEditId):null;
+    const o={id:ed?ed.id:Date.now(),nome:$('#cartaoNome').value.trim(),banco,tipo:$('#cartaoTipo').value,final:$('#cartaoFinal').value.trim(),limite:parseFloat($('#cartaoLimite').value)};
+    if(sel==='Alimentação')o.cor=$('#cartaoCor').value;
+    if(!o.nome||!o.banco||!/^\d{4}$/.test(o.final)||!(o.limite>=0)){toast('Confira os dados do cartão (banco e final com 4 números).');return}
+    if(ed){
+      const antigo=ed.nome;Object.assign(ed,o);if(!o.cor)delete ed.cor;
+      // dívidas e gastos guardam o nome do cartão no texto da forma de pagamento: mantém tudo coerente
+      if(antigo!==o.nome)['dividas','gastos'].forEach(k=>L(k).forEach(i=>{i.forma=String(i.forma||'').replace(/^(Cartão (?:Crédito|Débito) - )(.*)$/,(m,a,b)=>b===antigo?a+o.nome:m)}));
+      save();$('#dlgCartao').close();refresh();log(`Editou cartão: ${o.nome} (${o.banco})`);toast('Cartão atualizado.');return;
+    }
+    L('cartoes').push(o);save();$('#dlgCartao').close();refresh();log(`Adicionou cartão: ${o.nome} (${o.banco})`);toast('Cartão salvo.');
+  };
+
+  /* ===== Exportação ===== */
+  function datasets(){
+    const u=db.currentUser;
+    return{
+      renda:{n:'Renda',c:['Métrica','Valor'],r:[['Salário mensal',db.salarios[u]||0]]},
+      entradas:{n:'Entradas',c:['Descrição','Forma','Valor','Data'],r:L('entradas').map(i=>[i.desc,i.forma,i.valor,fmtData(i.data)])},
+      dividas:{n:'Dívidas Fixas',c:['Título','Tipo','Forma','Valor','Vencimento','Pago'],r:L('dividas').map(i=>[i.titulo,i.tipo,i.forma,i.valor,fmtData(i.vencimento||i.data),i.pago?'Sim':'Não'])},
+      gastos:{n:'Gastos',c:['Descrição','Categoria','Forma','Valor','Data'],r:L('gastos').map(i=>[i.desc,i.categoria,i.forma,i.valor,fmtData(i.data)])},
+      cartoes:{n:'Cartões',c:['Nome','Banco','Tipo','Final','Limite'],r:L('cartoes').map(i=>[i.nome,i.banco,i.tipo,i.final,i.limite])},
+      auditoria:{n:'Auditoria',c:['Data','Hora','Usuário','Ação'],r:db.auditoria.map(i=>[i.data,i.hora,i.usuario,i.acao])}
+    };
+  }
+  const MONEY=['Valor','Limite'];
+  const nomeArq=()=>db.currentUser.replace(/[^\wÀ-ú-]+/g,'_');
+  function exportar(tipo,alvo){
+    const ds=datasets(),geral=alvo==='geral',chaves=geral?['renda','entradas','dividas','gastos','cartoes']:[alvo];
+    if(!geral&&!ds[alvo].r.length){toast('Não há dados para exportar nesta página.');return}
+    const base=geral?`relatorio_geral_${nomeArq()}`:`relatorio_${alvo}_${nomeArq()}`;
+    if(tipo==='xls'){
+      if(!window.XLSX){toast('Biblioteca do Excel indisponível. Conecte-se à internet uma vez.');return}
+      const wb=XLSX.utils.book_new();
+      chaves.forEach(k=>{if(geral&&!ds[k].r.length&&k!=='renda')return;XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([ds[k].c,...ds[k].r]),ds[k].n.slice(0,31))});
+      XLSX.writeFile(wb,base+'.xlsx');
+    }else{
+      if(!window.jspdf){toast('Biblioteca de PDF indisponível. Conecte-se à internet uma vez.');return}
+      const doc=new jspdf.jsPDF(),head={fillColor:[93,64,55]};
+      const fm=(c,r)=>r.map(l=>l.map((v,i)=>MONEY.includes(c[i])?BRL(v):v));
+      doc.setFontSize(16);doc.text(geral?`Relatório Geral Financeiro - ${db.currentUser}`:`Relatório de ${ds[alvo].n} - ${db.currentUser}`,14,18);
+      doc.setFontSize(9);doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`,14,25);
+      let y=32;
+      chaves.forEach((k,idx)=>{
+        if(geral){if(idx>0){y=doc.lastAutoTable.finalY+10;if(y>250){doc.addPage();y=20}}doc.setFontSize(12);doc.text(`${idx+1}. ${ds[k].n}`,14,y);y+=4}
+        doc.autoTable({head:[ds[k].c],body:ds[k].r.length?fm(ds[k].c,ds[k].r):[['Sem registros',...Array(ds[k].c.length-1).fill('-')]],startY:y,theme:'grid',headStyles:head,styles:{fontSize:9}});
+      });
+      doc.save(base+'.pdf');
+    }
+    log(`Exportou ${geral?'o relatório geral':'dados de '+alvo} para ${tipo==='xls'?'Excel':'PDF'}`);
+  }
+
+  /* ===== PWA: instalação ===== */
+  let promptInstalacao=null;
+  window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();promptInstalacao=e;atualizarInstalar()});
+  window.addEventListener('appinstalled',()=>{promptInstalacao=null;atualizarInstalar();toast('Aplicativo instalado com sucesso!')});
+  const ehIOS=()=>/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+  const instalado=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+  function atualizarInstalar(){
+    const ok=(!!promptInstalacao||ehIOS())&&!instalado();
+    ['#btnInstalarApp','#btnInstalarLogin'].forEach(s=>{const el=$(s);if(el)el.hidden=!ok});
+    $('#barraInstalar').hidden=!(promptInstalacao&&!instalado()&&sessionStorage.getItem('fin-instalar-off')!=='1');
+  }
+  function abrirInstalar(){
+    const t=$('#textoInstalar'),b=$('#btnInstalarAgora');
+    if(instalado()){t.textContent='O aplicativo já está instalado neste dispositivo. Procure o ícone "Financeiro" na tela inicial.';b.hidden=true}
+    else if(promptInstalacao){t.textContent='Instale o Financeiro Bembem para abrir direto da tela inicial, em tela cheia e funcionando até sem internet.';b.hidden=false}
+    else if(ehIOS()){t.innerHTML='No iPhone/iPad:<br><br><b>1.</b> Toque em <b>Compartilhar</b> no Safari (quadrado com seta para cima).<br><b>2.</b> Toque em <b>Adicionar à Tela de Início</b>.<br><b>3.</b> Toque em <b>Adicionar</b>.';b.hidden=true}
+    else{t.textContent='Abra este site no Chrome e use a opção "Instalar aplicativo" do menu do navegador.';b.hidden=true}
+    $('#sidebar').classList.remove('aberta');$('#dlgInstalar').showModal();
+  }
+  function instalarAgora(){
+    if(!promptInstalacao){abrirInstalar();return}
+    promptInstalacao.prompt();
+    promptInstalacao.userChoice?.then(()=>{promptInstalacao=null;atualizarInstalar()}).catch(()=>{});
+    $('#dlgInstalar').close();
+  }
+  if('serviceWorker' in navigator&&(isSecureContext||['localhost','127.0.0.1'].includes(location.hostname))){
+    addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').then(reg=>{
+      reg.addEventListener('updatefound',()=>{const n=reg.installing;n&&n.addEventListener('statechange',()=>{if(n.state==='installed'&&navigator.serviceWorker.controller)toast('Nova versão disponível. Feche e abra o aplicativo para atualizar.',6000)})});
+    }).catch(()=>{}));
+  }
+
+  /* ===== Mostrar / ocultar senha (todos os campos de senha) ===== */
+  function ativarOlhoSenha(){
+    $$('input[type="password"]').forEach(inp=>{
+      if(inp.parentElement.classList.contains('pw'))return;
+      const w=document.createElement('span');w.className='pw';
+      inp.parentNode.insertBefore(w,inp);w.appendChild(inp);
+      const b=document.createElement('button');b.type='button';b.className='pw-btn';b.textContent='Mostrar';
+      b.setAttribute('aria-label','Mostrar senha');
+      b.onclick=()=>{
+        const ver=inp.type==='password';inp.type=ver?'text':'password';
+        b.textContent=ver?'Ocultar':'Mostrar';b.setAttribute('aria-label',ver?'Ocultar senha':'Mostrar senha');inp.focus();
+      };
+      w.appendChild(b);
+    });
+  }
+  ativarOlhoSenha();
+  // ao fechar qualquer janela, as senhas voltam a ficar escondidas
+  document.addEventListener('close',e=>{
+    if(e.target.tagName!=='DIALOG')return;
+    e.target.querySelectorAll('.pw').forEach(w=>{const i=w.querySelector('input'),b=w.querySelector('.pw-btn');i.type='password';b.textContent='Mostrar';b.setAttribute('aria-label','Mostrar senha')});
+  },true);
+
+  /* ===== Eventos ===== */
+  document.addEventListener('click',async e=>{
+    const t=e.target;
+    const tab=t.closest('[data-tab]');if(tab){switchTab(tab.dataset.tab);return}
+    const us=t.closest('[data-user]');if(us){pedirSenha(us.dataset.user);return}
+    const ap=t.closest('[data-apagar]');if(ap){apagarUsuario(ap.dataset.apagar);return}
+    const cl=t.closest('[data-close]');if(cl){cl.closest('dialog').close();return}
+    const tp=t.closest('[data-tp]');if(tp){setTipo(tp.dataset.tp);return}
+    const ex=t.closest('[data-exp]');if(ex){exportar(ex.dataset.exp,ex.dataset.geral?'geral':currentTab);$$('.menu').forEach(m=>m.hidden=true);return}
+    const ed=t.closest('[data-edit]');if(ed){editar(ed.dataset.edit,ed.dataset.id);return}
+    const pg=t.closest('[data-pago]');
+    if(pg){const d=L('dividas').find(x=>String(x.id)===pg.dataset.pago);if(d){d.pago=!d.pago;save();refresh();log(`Alterou status da dívida "${d.titulo}" para ${d.pago?'Pago':'Pendente'}`)}return}
+    const dl=t.closest('[data-del]');
+    if(dl){
+      const k=dl.dataset.del,nomes={entradas:'entrada',dividas:'dívida',gastos:'gasto',cartoes:'cartão'};
+      if(!await confirmar('Remover '+nomes[k],`Deseja realmente remover ${k==='cartoes'?'este':'esta'} ${nomes[k]}?`))return;
+      db[k][db.currentUser]=L(k).filter(i=>String(i.id)!==dl.dataset.id);save();refresh();log(`Removeu ${k==='cartoes'?'um':'uma'} ${nomes[k]}`);toast('Removido.');return;
+    }
+    const dd=t.closest('[data-dd]');
+    if(dd){const m=dd.nextElementSibling,aberto=!m.hidden;$$('.menu').forEach(x=>x.hidden=true);m.hidden=aberto;return}
+    if(!t.closest('.menu'))$$('.menu').forEach(m=>m.hidden=true);
+    if($('#sidebar').classList.contains('aberta')&&!t.closest('#sidebar,#menuToggle,#btnMais'))$('#sidebar').classList.remove('aberta');
+  });
+  document.addEventListener('change',e=>{const m=e.target.id.match(/^(div|gasto)(Forma|TipoCartao|Parcelado)$/);if(m)ajusta(m[1])});
+  document.addEventListener('input',e=>{if(e.target.id==='divQtd'||e.target.id==='divData')previewDiv()});
+
+  window.addEventListener('load',()=>{
+    montarNav();renderLogin();
+    $('#btnNovoUsuarioLogin').onclick=$('#btnNovoUsuarioNav').onclick=()=>{$('#fUsuario').reset();$('#erroNovoUser').hidden=true;$('#dlgUsuario').showModal()};
+    $('#btnSair').onclick=logout;
+    $('#btnSalvarBackup').onclick=()=>{$('#sidebar').classList.remove('aberta');salvarBackup()};
+    $('#btnRestaurarBackup').onclick=()=>{$('#sidebar').classList.remove('aberta');$('#fileBackup').click()};
+    $('#btnRestaurarLogin').onclick=()=>$('#fileBackup').click();
+    $('#fileBackup').onchange=e=>{const f=e.target.files[0];e.target.value='';lerBackup(f)};
+    $('#btnAdd').onclick=()=>{const a=TABS[currentTab].add;if(a)abrir(a[1])};
+    $('#btnVoltar').onclick=()=>switchTab(previousTab===currentTab?'renda':previousTab);
+    $('#menuToggle').onclick=()=>$('#sidebar').classList.toggle('aberta');
+    $('#btnMais').onclick=()=>$('#sidebar').classList.toggle('aberta');
+    $('#colapsar').onclick=()=>document.body.classList.toggle('menu-recolhido');
+    $('#btnEditSal').onclick=()=>{$('#salBox').hidden=!$('#salBox').hidden;$('#inputSalario').value=db.salarios[db.currentUser]||0};
+    $('#btnSalSave').onclick=()=>{
+      const v=parseFloat($('#inputSalario').value);if(!(v>=0)){toast('Informe um valor válido.');return}
+      db.salarios[db.currentUser]=v;save();$('#salBox').hidden=true;renderRenda();log('Atualizou o salário mensal');toast('Salário atualizado.');
+    };
+    ['#btnInstalarApp','#btnInstalarLogin'].forEach(s=>$(s).onclick=abrirInstalar);
+    $('#btnInstalarBarra').onclick=instalarAgora;$('#btnInstalarAgora').onclick=instalarAgora;
+    $('#btnFecharBarra').onclick=()=>{sessionStorage.setItem('fin-instalar-off','1');atualizarInstalar()};
+    atualizarInstalar();
+  });
+</script>
 </body>
 </html>
