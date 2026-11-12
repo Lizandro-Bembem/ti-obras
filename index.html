@@ -2,52 +2,18 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Monitoramento de TI em Obras</title>
-  <meta name="description" content="Sistema de monitoramento de equipamentos de TI, solicitações, funcionários e estoque das obras. Funciona offline.">
-  <link rel="icon" type="image/png" href="favicon.png">
-  <link rel="apple-touch-icon" href="apple-touch-icon.png">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="TI em Obras">
+  <link rel="icon" type="image/jpeg" href="logo.jpg">
+  <link rel="apple-touch-icon" href="logo.jpg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
-  <link rel="manifest" href="../../Downloads/manifest.json">
-  <meta name="theme-color" content="#2c2e33">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#25282e">
 </head>
 <body>
-
-<!-- Ícones SVG usados na navegação inferior -->
-<svg style="display:none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-  <symbol id="ic-resumo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M5 20v-7M11 20V4M17 20v-4M3 20h18"/>
-  </symbol>
-  <symbol id="ic-obras" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M3 21h18M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16M9 7h2M13 7h2M9 11h2M13 11h2M9 15h2M13 15h2"/>
-  </symbol>
-  <symbol id="ic-funcionarios" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <circle cx="9" cy="8" r="3.4"/><path d="M2.5 20c.9-3.4 3.4-4.9 6.5-4.9s5.6 1.5 6.5 4.9"/><circle cx="17.5" cy="9.5" r="2.5"/><path d="M16 15.2c2.4.3 4.4 1.6 5 4.3"/>
-  </symbol>
-  <symbol id="ic-estoque" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/>
-  </symbol>
-  <symbol id="ic-auditoria" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6l8-3z"/><path d="M9 12l2 2 4-4"/>
-  </symbol>
-  <symbol id="ic-mais" viewBox="0 0 24 24" fill="currentColor" stroke="none">
-    <circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/>
-  </symbol>
-  <symbol id="ic-instalar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M12 3v11M7 9l5 5 5-5M4 20h16"/>
-  </symbol>
-  <symbol id="ic-fechar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-    <path d="M6 6l12 12M18 6L6 18"/>
-  </symbol>
-</svg>
-
 <!-- Tela de senha -->
 <div class="login" id="telaLogin">
   <div class="login-card">
@@ -71,10 +37,6 @@
       <button type="submit" class="btn btn-primary btn-largo" id="btnLogin">Entrar</button>
     </form>
     <button type="button" class="link-troca" id="linkTroca">Esqueci a senha</button>
-    <button type="button" class="link-instalar-login" id="btnInstalarLogin" hidden>
-      <svg class="icone-pequeno"><use href="#ic-instalar"></use></svg>
-      Instalar aplicativo no celular
-    </button>
   </div>
 </div>
 
@@ -97,10 +59,6 @@
 
       <div class="divisor-sidebar"></div>
 
-      <button class="menu-item-btn" id="btnInstalarApp" type="button" hidden>
-        <svg class="icone-pequeno"><use href="#ic-instalar"></use></svg>
-        Instalar no celular
-      </button>
       <button class="menu-item-btn" id="btnBackup" type="button">Salvar Backup</button>
       <button class="menu-item-btn" id="btnRestaurar" type="button">Restaurar Backup</button>
       <input type="file" id="arquivoBackup" accept=".json,application/json" hidden>
@@ -144,7 +102,7 @@
         </div>
         <div class="actions" id="acoesTopoListaObras">
           <button class="btn btn-primary" id="btnNovaObraTop" type="button">+ Nova Obra</button>
-          <button class="btn btn-light btn-perigo-suave" id="btnRemoverObraTop" type="button">Remover Obra</button>
+          <button class="btn btn-light" id="btnRemoverObraTop" type="button" style="color: var(--vermelho-aveludado); border-color: var(--vermelho-borda-suave);">Remover Obra</button>
         </div>
       </header>
 
@@ -507,7 +465,7 @@
         <!-- Ações dentro de uma gaiola -->
         <div class="actions" id="acoesTopoGaiola" hidden>
           <button class="btn btn-light" id="btnNovoItemEstoque" type="button">+ Adicionar</button>
-          <button class="btn btn-light btn-perigo-suave" id="btnRemoverItemEstoque" type="button">Remover</button>
+          <button class="btn btn-light" id="btnRemoverItemEstoque" type="button" style="color: var(--vermelho-aveludado); border-color: var(--vermelho-borda-suave);">Remover</button>
           <button class="btn btn-light" id="btnExportarEstoquePdf" type="button">Exportar para PDF</button>
           <button class="btn btn-primary" id="btnExportarEstoqueExcel" type="button">Exportar para Excel</button>
         </div>
@@ -570,75 +528,20 @@
       </section>
     </div>
 
-    <!-- Modal genérico do sistema (substitui alert/confirm do navegador) -->
-    <dialog id="dlgAvisoSistema">
-      <form method="dialog" id="formAvisoSistema" novalidate style="padding: 20px; display: grid; gap: 12px; max-width: 400px;">
-        <h3 id="tituloAvisoSistema" style="margin: 0; font-size: 1.05rem; color: var(--texto-principal);">Aviso do Sistema</h3>
-        <p id="textoAvisoSistema" style="margin: 0; font-size: 0.85rem; line-height: 1.4; color: var(--texto-suave);"></p>
-        <div class="dlg-actions" style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 8px;">
-          <button type="button" class="btn btn-light" id="btnCancelarAviso" hidden>Cancelar</button>
-          <button type="submit" class="btn btn-primary" id="btnConfirmarAviso">OK</button>
-        </div>
-      </form>
-    </dialog>
-
   </main>
 </div>
 
-<!-- Barra flutuante de instalação (Android/Chrome) -->
-<div class="barra-instalar" id="barraInstalar" hidden role="region" aria-label="Instalar aplicativo">
-  <div class="barra-instalar-info">
-    <img src="icon-192.png" alt="" class="barra-instalar-icone">
-    <div>
-      <strong>TI em Obras</strong>
-      <span>Instale no celular para usar como aplicativo</span>
-    </div>
-  </div>
-  <div class="barra-instalar-acoes">
-    <button type="button" class="btn btn-primary" id="btnInstalarBarra">Instalar</button>
-    <button type="button" class="btn-fechar-barra" id="btnFecharBarraInstalar" aria-label="Fechar aviso de instalação">
-      <svg class="icone-pequeno"><use href="#ic-fechar"></use></svg>
-    </button>
-  </div>
-</div>
-
-<!-- Navegação inferior estilo aplicativo (celular) -->
-<nav class="bottom-nav" id="bottomNav" aria-label="Navegação principal">
-  <button type="button" class="bottom-nav-item" id="btnTabResumo" data-tela="resumo">
-    <svg class="icone-nav"><use href="#ic-resumo"></use></svg><span>Resumo</span>
-  </button>
-  <button type="button" class="bottom-nav-item ativo" id="btnTabObras" data-tela="obras">
-    <svg class="icone-nav"><use href="#ic-obras"></use></svg><span>Obras</span>
-  </button>
-  <button type="button" class="bottom-nav-item" id="btnTabFuncionarios" data-tela="funcionarios">
-    <svg class="icone-nav"><use href="#ic-funcionarios"></use></svg><span>Funcionários</span>
-  </button>
-  <button type="button" class="bottom-nav-item" id="btnTabEstoque" data-tela="estoque">
-    <svg class="icone-nav"><use href="#ic-estoque"></use></svg><span>Estoque</span>
-  </button>
-  <button type="button" class="bottom-nav-item" id="btnTabAuditoria" data-tela="auditoria">
-    <svg class="icone-nav"><use href="#ic-auditoria"></use></svg><span>Auditoria</span>
-  </button>
-  <button type="button" class="bottom-nav-item" id="btnTabMais">
-    <svg class="icone-nav"><use href="#ic-mais"></use></svg><span>Mais</span>
-  </button>
-</nav>
-
 <!-- ================= MODAIS ================= -->
-<dialog id="dlgInstalar">
-  <div class="modal-card-conteudo">
-    <div class="modal-cabecalho">
-      <h3 id="tituloInstalar">Instalar aplicativo</h3>
+<!-- Modal genérico do sistema (substitui alert/confirm do navegador) -->
+<dialog id="dlgAvisoSistema">
+  <form method="dialog" id="formAvisoSistema" novalidate style="padding: 20px; display: grid; gap: 12px; max-width: 400px;">
+    <h3 id="tituloAvisoSistema" style="margin: 0; font-size: 1.05rem; color: var(--texto-principal);">Aviso do Sistema</h3>
+    <p id="textoAvisoSistema" style="margin: 0; font-size: 0.85rem; line-height: 1.4; color: var(--texto-suave);"></p>
+    <div class="dlg-actions" style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 8px;">
+      <button type="button" class="btn btn-light" id="btnCancelarAviso" hidden>Cancelar</button>
+      <button type="submit" class="btn btn-primary" id="btnConfirmarAviso">OK</button>
     </div>
-    <div class="instalar-corpo">
-      <img src="icon-192.png" alt="Ícone do aplicativo TI em Obras" class="instalar-icone-grande">
-      <p id="textoInstalar" class="instalar-texto"></p>
-    </div>
-    <div class="dlg-actions">
-      <button type="button" class="btn btn-light" id="btnFecharInstalar">Fechar</button>
-      <button type="button" class="btn btn-primary" id="btnInstalarAgora" hidden>Instalar agora</button>
-    </div>
-  </div>
+  </form>
 </dialog>
 
 <dialog id="dlgSenhaRemoverFunc">
@@ -1022,7 +925,7 @@
       </select>
     </label>
 
-    <label id="rotuloTipoRegistro">Classificação <input type="text" id="inputClassificacaoAuto" value="Equipamento" disabled style="background: var(--fundo-chip); font-weight: 600;"></label>
+    <label id="rotuloTipoRegistro">Classificação <input type="text" id="inputClassificacaoAuto" value="Equipamento" disabled style="background: #f1f1ee; font-weight: 600;"></label>
 
     <label>Tipo
       <select name="tipo" id="selTipoItemEstoque" style="transition: all 0.3s ease; animation: fadeInSelect 0.4s ease;">
@@ -1076,6 +979,15 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="../../Downloads/script.js"></script>
+<script src="script.js"></script>
+<script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("./sw.js")
+              .then((reg) => console.log("Service Worker registrado com sucesso!", reg))
+              .catch((err) => console.log("Falha ao registrar Service Worker:", err));
+    });
+  }
+</script>
 </body>
 </html>

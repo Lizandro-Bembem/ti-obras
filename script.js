@@ -72,7 +72,6 @@ const dadosIniciais = {
 const $ = (s) => document.querySelector(s);
 const on = (sel, ev, fn) => { const el = $(sel); if (el) el.addEventListener(ev, fn); };
 
-let estado = carregar();
 let obraAtual = "todas";
 let telaAtual = "obras";
 let abaFuncionariosAtual = "ativos";
@@ -103,9 +102,16 @@ let itemParaRemoverEstoqueId = null;
 const ordemEquip = { campo: null, dir: 1 };
 const ordemSolic = { campo: null, dir: 1 };
 
+const TIPOS_CORRIGIDOS = { "Culer de CPU": "Cooler de CPU", "Suporte p/ TinkPad": "Suporte p/ ThinkPad" };
+
 function normalizarEstado(d) {
     ["obras", "equipamentos", "solicitacoes", "funcionarios", "desligados", "auditoria", "estoque"]
         .forEach((k) => { d[k] = Array.isArray(d[k]) ? d[k] : []; });
+
+    // Campos que só existem no arquivo de backup, não fazem parte dos dados do sistema
+    delete d.app;
+    delete d.exportadoEm;
+
     d.funcionarios = d.funcionarios.map((f) => {
         if (!Array.isArray(f.equipamentos)) {
             f.equipamentos = (f.tipoEquipamento || f.equipamento) ? [{
@@ -117,16 +123,38 @@ function normalizarEstado(d) {
         }
         return f;
     });
+
+    // Corrige grafias antigas ("Culer", "TinkPad") em dados já salvos
+    d.equipamentos.forEach((e) => { if (TIPOS_CORRIGIDOS[e.tipo]) e.tipo = TIPOS_CORRIGIDOS[e.tipo]; });
+    d.estoque = d.estoque.map((i) => {
+        if (TIPOS_CORRIGIDOS[i.tipo]) i.tipo = TIPOS_CORRIGIDOS[i.tipo];
+        // Garante que a gaiola esteja sempre pelo id (g1..g6), mesmo se vier pelo nome
+        const alvo = String(i.gaiola || "").toLowerCase();
+        const g = GAIOLAS_PADRAO.find((x) => x.id === alvo || x.nome.toLowerCase() === alvo);
+        if (g) i.gaiola = g.id;
+        return i;
+    });
     return d;
 }
 
+let erroCarregamento = false;
+
 function carregar() {
-    try {
-        const salvo = localStorage.getItem(CHAVE);
-        if (salvo) return normalizarEstado(JSON.parse(salvo));
-    } catch (e) { /* ignora */ }
-    return structuredClone(dadosIniciais);
+    let salvo = null;
+    try { salvo = localStorage.getItem(CHAVE); } catch (e) { /* armazenamento bloqueado */ }
+    if (salvo) {
+        try {
+            return normalizarEstado(JSON.parse(salvo));
+        } catch (e) {
+            // Dados ilegíveis: guarda uma cópia para não perder tudo quando o sistema salvar por cima
+            erroCarregamento = true;
+            try { localStorage.setItem(`${CHAVE}-corrompido-${Date.now()}`, salvo); } catch (e2) { /* ignora */ }
+        }
+    }
+    return JSON.parse(JSON.stringify(dadosIniciais));
 }
+
+let estado = carregar();
 
 function salvar() {
     try {
@@ -208,7 +236,6 @@ const CHAVE_ACESSO = "ti-obras-acesso";
 const CHAVE_SESSAO = "ti-obras-sessao";
 let modoLogin = "entrar";
 
-/* Hash antigo — mantido apenas para validar senhas criadas em versões anteriores. */
 function hashTexto(str) {
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
@@ -218,51 +245,10 @@ function hashTexto(str) {
     return "h_" + Math.abs(hash).toString(36);
 }
 
-/* Hash forte SHA-256 com salt (WebCrypto). Em contexto sem suporte (http/file://), usa o hash antigo. */
-async function hashSenhaForte(senha, salt) {
-    if (window.crypto && crypto.subtle && crypto.subtle.digest) {
-        const dados = new TextEncoder().encode(`${salt}:${senha}`);
-        const resumo = await crypto.subtle.digest("SHA-256", dados);
-        return "s_" + [...new Uint8Array(resumo)].map((b) => b.toString(16).padStart(2, "0")).join("");
-    }
-    return hashTexto(senha);
-}
-
-function gerarSalt() {
-    if (window.crypto && crypto.getRandomValues) {
-        const bytes = crypto.getRandomValues(new Uint8Array(16));
-        return [...bytes].map((b) => b.toString(16).padStart(2, "0")).join("");
-    }
-    return String(Date.now());
-}
-
 function lerAcesso() {
     try { return JSON.parse(localStorage.getItem(CHAVE_ACESSO)); } catch (e) { return null; }
 }
 function gravarAcesso(obj) { localStorage.setItem(CHAVE_ACESSO, JSON.stringify(obj)); }
-
-/* Cria o registro de acesso com hash SHA-256 + salt. */
-async function criarAcesso(senha, codigo) {
-    const salt = gerarSalt();
-    const hash = await hashSenhaForte(senha, salt);
-    return { algo: "sha256", salt, hash, codigo };
-}
-
-/* Verifica a senha e migra automaticamente senhas antigas (hash fraco) para SHA-256. */
-async function verificarSenha(senha) {
-    const acesso = lerAcesso();
-    if (!acesso) return false;
-    if (acesso.algo === "sha256" && acesso.salt && acesso.hash) {
-        return (await hashSenhaForte(senha, acesso.salt)) === acesso.hash;
-    }
-    if (hashTexto(senha) === acesso.hash) {
-        try {
-            gravarAcesso(await criarAcesso(senha, acesso.codigo || ""));
-        } catch (e) { /* mantém o formato antigo se não for possível migrar */ }
-        return true;
-    }
-    return false;
-}
 
 function definirModoLogin(modo) {
     modoLogin = modo;
@@ -299,120 +285,6 @@ function gerarCodigoRecuperacao() {
     const letras = [...bytes].map((b) => alfabeto[b % alfabeto.length]).join("");
     return `${letras.slice(0, 4)}-${letras.slice(4, 8)}-${letras.slice(8, 12)}`;
 }
-
-/* ==========================================================================
-   PWA — INSTALAÇÃO NO CELULAR E ATUALIZAÇÕES
-   ========================================================================== */
-
-let promptInstalacao = null;
-const CHAVE_INSTALAR_DISPENSADO = "ti-obras-instalar-dispensado";
-
-window.addEventListener("beforeinstallprompt", (e) => {
-    e.preventDefault();
-    promptInstalacao = e;
-    atualizarInterfaceInstalar();
-});
-
-window.addEventListener("appinstalled", () => {
-    promptInstalacao = null;
-    atualizarInterfaceInstalar();
-    mostrarAviso("Aplicativo instalado com sucesso!");
-});
-
-function ehIOS() {
-    return /iphone|ipad|ipod/i.test(navigator.userAgent) ||
-        (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-}
-
-function estaRodandoInstalado() {
-    return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
-}
-
-function instalacaoDisponivel() {
-    return !!promptInstalacao || ehIOS();
-}
-
-function atualizarInterfaceInstalar() {
-    const disponivel = instalacaoDisponivel() && !estaRodandoInstalado();
-    ["#btnInstalarApp", "#btnInstalarLogin"].forEach((s) => {
-        const el = $(s);
-        if (el) el.hidden = !disponivel;
-    });
-    const barra = $("#barraInstalar");
-    if (barra) {
-        const dispensado = sessionStorage.getItem(CHAVE_INSTALAR_DISPENSADO) === "1";
-        barra.hidden = !(promptInstalacao && !estaRodandoInstalado() && !dispensado);
-    }
-}
-
-function abrirModalInstalar() {
-    const dlg = $("#dlgInstalar");
-    if (!dlg) return;
-    const botao = $("#btnInstalarAgora");
-    const texto = $("#textoInstalar");
-
-    if (estaRodandoInstalado()) {
-        texto.textContent = "O aplicativo já está instalado neste dispositivo. Procure o ícone \"TI em Obras\" na tela inicial.";
-        botao.hidden = true;
-    } else if (promptInstalacao) {
-        texto.textContent = "Instale o TI em Obras no seu celular para abrir direto da tela inicial, em tela cheia e funcionando até sem internet.";
-        botao.hidden = false;
-    } else if (ehIOS()) {
-        texto.innerHTML = "No iPhone/iPad, siga os passos:<br><br>" +
-            "<strong>1.</strong> Toque no botão <strong>Compartilhar</strong> do Safari (quadrado com seta para cima).<br>" +
-            "<strong>2.</strong> Toque em <strong>Adicionar à Tela de Início</strong>.<br>" +
-            "<strong>3.</strong> Toque em <strong>Adicionar</strong>. Pronto!";
-        botao.hidden = true;
-    } else {
-        texto.textContent = "Abra este site no Chrome (no celular ou no computador) e use a opção \"Instalar aplicativo\" do menu do navegador.";
-        botao.hidden = true;
-    }
-    const sb = $("#sidebar");
-    if (sb) sb.classList.remove("aberta");
-    dlg.showModal();
-}
-
-function fecharBarraInstalar() {
-    sessionStorage.setItem(CHAVE_INSTALAR_DISPENSADO, "1");
-    atualizarInterfaceInstalar();
-}
-
-function instalarAgora() {
-    if (!promptInstalacao) { abrirModalInstalar(); return; }
-    promptInstalacao.prompt();
-    if (promptInstalacao.userChoice) {
-        promptInstalacao.userChoice.then(() => {
-            promptInstalacao = null;
-            atualizarInterfaceInstalar();
-        }).catch(() => {});
-    }
-    const dlg = $("#dlgInstalar");
-    if (dlg) dlg.close();
-}
-
-/* Service Worker: só registra em contexto seguro (https ou localhost) */
-function registrarServiceWorker() {
-    if (!("serviceWorker" in navigator)) return;
-    const seguro = window.isSecureContext || location.protocol === "https:" ||
-        ["localhost", "127.0.0.1"].includes(location.hostname);
-    if (!seguro) return;
-    window.addEventListener("load", () => {
-        navigator.serviceWorker.register("./sw.js")
-            .then((reg) => {
-                reg.addEventListener("updatefound", () => {
-                    const nw = reg.installing;
-                    if (!nw) return;
-                    nw.addEventListener("statechange", () => {
-                        if (nw.state === "installed" && navigator.serviceWorker.controller) {
-                            mostrarAviso("Nova versão disponível. Feche e abra o aplicativo novamente para atualizar.", 6000);
-                        }
-                    });
-                });
-            })
-            .catch(() => { /* ambiente sem suporte: o sistema segue funcionando normalmente */ });
-    });
-}
-registrarServiceWorker();
 
 /* ==========================================================================
    INICIALIZAÇÃO DOS EVENTOS
@@ -565,11 +437,12 @@ document.addEventListener("DOMContentLoaded", () => {
         $("#dlgSenhaRemoverGaiola").close();
     });
 
-    $("#formSenhaRemoverGaiola").addEventListener("submit", async (ev) => {
+    $("#formSenhaRemoverGaiola").addEventListener("submit", (ev) => {
         ev.preventDefault();
         const senhaDigitada = $("#inputSenhaRemoverGaiola").value.trim();
+        const acesso = lerAcesso();
 
-        if (!(await verificarSenha(senhaDigitada))) {
+        if (!acesso || hashTexto(senhaDigitada) !== acesso.hash) {
             $("#erroSenhaRemoverGaiola").hidden = false;
             $("#erroSenhaRemoverGaiola").textContent = senhaDigitada ? "Senha incorreta. Ação não autorizada." : "Digite a senha do sistema.";
             return;
@@ -596,7 +469,7 @@ document.addEventListener("DOMContentLoaded", () => {
     $("#btnExportarEstoqueGeralPdf").addEventListener("click", () => exportarEstoqueGeralPdf());
 
     // ----- Login -----
-    $("#formLogin").addEventListener("submit", async (ev) => {
+    $("#formLogin").addEventListener("submit", (ev) => {
         ev.preventDefault();
         const senha = $("#loginSenha").value.trim();
         const confirma = $("#loginConfirma").value.trim();
@@ -607,7 +480,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (senha.length < 4) return falha("A senha deve ter no mínimo 4 caracteres.");
             if (senha !== confirma) return falha("As senhas não conferem.");
             const codigoNovo = gerarCodigoRecuperacao();
-            gravarAcesso(await criarAcesso(senha, codigoNovo));
+            gravarAcesso({ hash: hashTexto(senha), codigo: codigoNovo });
             $("#codigoRecuperacao").textContent = codigoNovo;
             $("#dlgCodigo").showModal();
             return;
@@ -618,14 +491,14 @@ document.addEventListener("DOMContentLoaded", () => {
             const acesso = lerAcesso();
             if (!acesso || cod !== acesso.codigo) return falha("Código de recuperação incorreto.");
             if (senha.length < 4 || senha !== confirma) return falha("Verifique os campos de nova senha.");
-            gravarAcesso(await criarAcesso(senha, acesso.codigo));
+            gravarAcesso({ hash: hashTexto(senha), codigo: acesso.codigo });
             entrarNoSistema();
             return;
         }
 
         const acesso = lerAcesso();
         if (!acesso) { definirModoLogin("criar"); return; }
-        if (await verificarSenha(senha)) entrarNoSistema();
+        if (hashTexto(senha) === acesso.hash) entrarNoSistema();
         else falha("Senha incorreta. Tente novamente.");
     });
 
@@ -673,27 +546,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     $("#buscaObraLista").addEventListener("input", renderGradeObras);
 
-    // ----- Navegação inferior (estilo aplicativo de celular) -----
-    document.querySelectorAll(".bottom-nav-item[data-tela]").forEach((btn) => {
-        btn.addEventListener("click", () => {
-            const tela = btn.dataset.tela;
-            if (tela === "obras") painelGradeAberto = true;
-            if (tela === "estoque") painelGradeGaiolasAberto = true;
-            if (telaAtual === tela) window.scrollTo({ top: 0, behavior: "smooth" });
-            alternarTela(tela);
-        });
-    });
-    on("#btnTabMais", "click", () => $("#sidebar").classList.toggle("aberta"));
-
-    // ----- Instalação do aplicativo (PWA) -----
-    on("#btnInstalarApp", "click", abrirModalInstalar);
-    on("#btnInstalarLogin", "click", abrirModalInstalar);
-    on("#btnInstalarBarra", "click", instalarAgora);
-    on("#btnFecharBarraInstalar", "click", fecharBarraInstalar);
-    on("#btnFecharInstalar", "click", () => $("#dlgInstalar").close());
-    on("#btnInstalarAgora", "click", instalarAgora);
-    atualizarInterfaceInstalar();
-
     // ----- KPIs e filtros de equipamentos -----
     $("#kpis").addEventListener("click", (ev) => {
         const btnKpi = ev.target.closest("[data-kpi-status]");
@@ -734,7 +586,11 @@ document.addEventListener("DOMContentLoaded", () => {
         if (obraEmEdicaoId) {
             const ob = estado.obras.find((o) => o.id === obraEmEdicaoId);
             if (ob) {
+                const nomeAntigo = ob.nome;
                 ob.nome = nome; ob.engenheiro = eng; ob.admin = adm; ob.cidade = cid;
+                if (nomeAntigo !== nome) {
+                    [...estado.funcionarios, ...estado.desligados].forEach((p) => { if (p.local === nomeAntigo) p.local = nome; });
+                }
                 registrar("edicao", "Obra atualizada", nome, nome, `Engenheiro: ${eng || "-"} | Escritório: ${adm || "-"}`);
                 mostrarAviso("Obra atualizada com sucesso!");
             }
@@ -819,7 +675,7 @@ document.addEventListener("DOMContentLoaded", () => {
         $("#dlgAlterarSenha").showModal();
     });
     $("#cancelaAlterar").addEventListener("click", () => $("#dlgAlterarSenha").close());
-    $("#formAlterarSenha").addEventListener("submit", async (ev) => {
+    $("#formAlterarSenha").addEventListener("submit", (ev) => {
         ev.preventDefault();
         const el = $("#formAlterarSenha").elements;
         const atual = el.atual.value.trim();
@@ -827,12 +683,12 @@ document.addEventListener("DOMContentLoaded", () => {
         const conf = el.confirma.value.trim();
         const acesso = lerAcesso();
 
-        if (!(await verificarSenha(atual))) { mostrarAviso("Senha atual incorreta."); return; }
+        if (!acesso || hashTexto(atual) !== acesso.hash) { mostrarAviso("Senha atual incorreta."); return; }
         if (nova.length < 4 || nova !== conf) {
             mostrarAviso("A nova senha deve ter no mínimo 4 caracteres e ser idêntica nos dois campos.");
             return;
         }
-        gravarAcesso(await criarAcesso(nova, acesso ? acesso.codigo : ""));
+        gravarAcesso({ hash: hashTexto(nova), codigo: acesso.codigo });
         $("#dlgAlterarSenha").close();
         mostrarAviso("Senha alterada com sucesso.");
     });
@@ -1115,6 +971,10 @@ document.addEventListener("DOMContentLoaded", () => {
     atualizarAvisoArmazenamento();
     initFuncionariosEventos();
 
+    if (erroCarregamento) {
+        mostrarAviso("Os dados salvos estavam ilegíveis. Uma cópia foi guardada no navegador. Se precisar, restaure um backup.", 9000);
+    }
+
     // ----- Sessão (por último, com todos os eventos já registrados) -----
     if (sessionStorage.getItem(CHAVE_SESSAO) === "autenticado") {
         entrarNoSistema();
@@ -1209,11 +1069,12 @@ function initFuncionariosEventos() {
         exclusaoFuncPendenteId = null;
         $("#dlgSenhaRemoverFunc").close();
     });
-    $("#formSenhaRemoverFunc").addEventListener("submit", async (ev) => {
+    $("#formSenhaRemoverFunc").addEventListener("submit", (ev) => {
         ev.preventDefault();
         const senhaDigitada = $("#inputSenhaRemoverFunc").value.trim();
+        const acesso = lerAcesso();
 
-        if (!(await verificarSenha(senhaDigitada))) {
+        if (!acesso || hashTexto(senhaDigitada) !== acesso.hash) {
             $("#erroSenhaRemoverFunc").hidden = false;
             $("#erroSenhaRemoverFunc").textContent = senhaDigitada ? "Senha incorreta. Ação não autorizada." : "Digite a senha do sistema.";
             return;
@@ -1263,11 +1124,12 @@ function initFuncionariosEventos() {
 
     // Reativar com senha
     $("#cancelaSenhaReativar").addEventListener("click", () => $("#dlgSenhaReativar").close());
-    $("#formSenhaReativar").addEventListener("submit", async (ev) => {
+    $("#formSenhaReativar").addEventListener("submit", (ev) => {
         ev.preventDefault();
         const senhaDigitada = $("#inputSenhaReativar").value.trim();
+        const acesso = lerAcesso();
 
-        if (!(await verificarSenha(senhaDigitada))) {
+        if (!acesso || hashTexto(senhaDigitada) !== acesso.hash) {
             $("#erroSenhaReativar").hidden = false;
             $("#erroSenhaReativar").textContent = senhaDigitada ? "Senha incorreta. Ação não autorizada." : "Digite a senha do sistema.";
             return;
@@ -1279,6 +1141,8 @@ function initFuncionariosEventos() {
             const reativado = {
                 id: desligado.idOriginal || novoId("f"),
                 nome: desligado.nome,
+                empresa: desligado.empresa || "Campbel Construções",
+                local: desligado.local || "",
                 equipamentos: desligado.equipamentosOriginais || [{ tipo: "Notebook", marca: "Equipamento Restabelecido", dataEntrega: dataLocal(), status: "Em uso" }],
                 status: "Em uso",
                 termoStatus: "Pendente",
@@ -1368,20 +1232,12 @@ function initFuncionariosEventos() {
 
         const equipamentos = [];
         document.querySelectorAll(".linha-equipamento-form").forEach((linha) => {
-            const tipo = linha.querySelector(".sel-tipo-equip-item").value;
-            const marca = linha.querySelector(".inp-marca-equip-item").value.trim();
-            const dataEntrega = linha.querySelector(".inp-data-equip-item").value;
-            const status = linha.querySelector(".sel-status-equip-item").value;
-            const qtd = parseInt(linha.querySelector(".inp-qtd-equip-item").value, 10) || 1;
-
-            for (let i = 0; i < qtd; i++) {
-                equipamentos.push({
-                    tipo,
-                    marca: qtd > 1 ? `${marca} (${i + 1})` : marca,
-                    dataEntrega,
-                    status
-                });
-            }
+            equipamentos.push({
+                tipo: linha.querySelector(".sel-tipo-equip-item").value,
+                marca: linha.querySelector(".inp-marca-equip-item").value.trim(),
+                dataEntrega: linha.querySelector(".inp-data-equip-item").value,
+                status: linha.querySelector(".sel-status-equip-item").value
+            });
         });
 
         if (!nome) { mostrarAviso("Preencha o nome do funcionário."); return; }
@@ -1395,6 +1251,8 @@ function initFuncionariosEventos() {
 
         const dados = {
             nome,
+            empresa: f.get("empresa") || "Campbel Construções",
+            local: f.get("local") || "",
             equipamentos,
             equipamento: equipamentos.map((e) => `${e.tipo} (${e.marca})`).join(", "),
             status: equipamentos.some((e) => e.status === "Em manutenção") ? "Em manutenção" : "Em uso",
@@ -1515,6 +1373,8 @@ function initFuncionariosEventos() {
         const desligado = {
             id: novoId("d"),
             idOriginal: func.id,
+            empresa: func.empresa || "",
+            local: func.local || "",
             nome: func.nome,
             dataDesligamento: dataDeslig,
             equipamentosOriginais: func.equipamentos,
@@ -1620,6 +1480,8 @@ function exportarFuncionariosExcel() {
     if (abaFuncionariosAtual === "ativos") {
         const linhas = [...estado.funcionarios].sort(porNome).map((f) => ({
             "Nome do Funcionário": f.nome,
+            "Empresa": f.empresa || "-",
+            "Local": f.local || "-",
             "Equipamentos": (f.equipamentos || []).map((e) => `${e.tipo} (${e.marca}) - ${e.status}`).join("; "),
             "Termo Titular": f.termoStatus || "Pendente",
             "Situação": "Ativo"
@@ -1629,6 +1491,8 @@ function exportarFuncionariosExcel() {
     } else {
         const linhas = [...estado.desligados].sort(porNome).map((d) => ({
             "Nome do Funcionário": d.nome,
+            "Empresa": d.empresa || "-",
+            "Local": d.local || "-",
             "Data Desligamento": formatarDataSimples(d.dataDesligamento),
             "Itens e Devolução": (d.itensDevolucao || []).map((i) => `${i.nome}: ${i.devolvido ? "Devolvido" : "Pendente"}`).join("; "),
             "Situação Geral": d.devolvido ? "Tudo Devolvido" : "Pendente"
@@ -1642,21 +1506,21 @@ function exportarFuncionariosPdf() {
     if (abaFuncionariosAtual === "ativos") {
         const lista = [...estado.funcionarios].sort(porNome);
         if (!lista.length) { mostrarAviso("Sem funcionários ativos para PDF."); return; }
-        let html = `<table><thead><tr><th>Nome</th><th>Equipamentos</th><th>Termo Titular</th><th>Reserva</th></tr></thead><tbody>`;
+        let html = `<table><thead><tr><th>Nome</th><th>Empresa / Local</th><th>Equipamentos</th><th>Termo Titular</th><th>Reserva</th></tr></thead><tbody>`;
         lista.forEach((f) => {
             const eqs = (f.equipamentos || []).map((e) => escapar(`${e.tipo} (${e.marca})`)).join("<br>");
             const res = f.reserva && f.reserva.tem === "sim" ? `Sim (${f.reserva.equipamento})` : "Não";
-            html += `<tr><td><strong>${escapar(f.nome)}</strong></td><td>${eqs}</td><td>${escapar(f.termoStatus || "Pendente")}</td><td>${escapar(res)}</td></tr>`;
+            html += `<tr><td><strong>${escapar(f.nome)}</strong></td><td>${escapar([f.empresa, f.local].filter(Boolean).join(" — ") || "-")}</td><td>${eqs}</td><td>${escapar(f.termoStatus || "Pendente")}</td><td>${escapar(res)}</td></tr>`;
         });
         html += `</tbody></table>`;
         imprimirComoPdf("Relatório de Funcionários Ativos", `Total: ${lista.length} colaboradores`, html);
     } else {
         const lista = [...estado.desligados].sort(porNome);
         if (!lista.length) { mostrarAviso("Sem funcionários desligados para PDF."); return; }
-        let html = `<table><thead><tr><th>Nome do Funcionário</th><th>Data Desligamento</th><th>Itens / Devolução</th></tr></thead><tbody>`;
+        let html = `<table><thead><tr><th>Nome do Funcionário</th><th>Empresa / Local</th><th>Data Desligamento</th><th>Itens / Devolução</th></tr></thead><tbody>`;
         lista.forEach((d) => {
             const itens = (d.itensDevolucao || []).map((i) => `${escapar(i.nome)}: <strong>${i.devolvido ? "Devolvido" : "Pendente"}</strong>`).join("<br>");
-            html += `<tr><td><strong>${escapar(d.nome)}</strong></td><td>${formatarDataSimples(d.dataDesligamento)}</td><td>${itens}</td></tr>`;
+            html += `<tr><td><strong>${escapar(d.nome)}</strong></td><td>${escapar([d.empresa, d.local].filter(Boolean).join(" — ") || "-")}</td><td>${formatarDataSimples(d.dataDesligamento)}</td><td>${itens}</td></tr>`;
         });
         html += `</tbody></table>`;
         imprimirComoPdf("Relatório de Funcionários Desligados", `Total: ${lista.length} registros`, html);
@@ -1758,6 +1622,10 @@ function abrirModalDetalhesDesligado(d) {
 
     $("#detalheDesligCorpo").innerHTML = `
     <div class="item-detalhe-bloco">
+      <strong>Empresa / Local</strong>
+      <span>${escapar(d.empresa || "-")} — ${escapar(d.local || "-")}</span>
+    </div>
+    <div class="item-detalhe-bloco">
       <strong>Data do Desligamento</strong>
       <span>${formatarDataSimples(d.dataDesligamento)}</span>
     </div>
@@ -1823,6 +1691,10 @@ function abrirModalDetalhesFuncionario(func) {
 
     $("#detalheFuncCorpo").innerHTML = `
     <div class="item-detalhe-bloco">
+      <strong>Empresa / Local</strong>
+      <span>${escapar(func.empresa || "-")} — ${escapar(func.local || "-")}</span>
+    </div>
+    <div class="item-detalhe-bloco">
       <strong>Equipamentos Titulares</strong>
       <span>${equipsHtml}</span>
     </div>
@@ -1859,7 +1731,11 @@ function abrirModalFuncionario(func = null) {
         f.nome.value = func.nome;
 
         if (f.empresa) f.empresa.value = func.empresa || "Campbel Construções";
-        if (f.local && func.local) f.local.value = func.local;
+        if (f.local && func.local) {
+            // Se a obra do funcionário não existir mais, mantém o valor salvo como opção
+            if (![...f.local.options].some((o) => o.value === func.local)) f.local.add(new Option(func.local, func.local));
+            f.local.value = func.local;
+        }
 
         f.termoStatus.value = func.termoStatus || "Pendente";
         const pendente = (func.termoStatus || "Pendente") === "Pendente";
@@ -1914,49 +1790,31 @@ function abrirModalReserva(func) {
     $("#dlgReserva").showModal();
 }
 
-function adicionarLinhaEquipamentoForm(tipoVal = "Notebook", marcaVal = "", dataVal = dataLocal(), statusVal = "Em uso", qtdVal = 1) {
+function adicionarLinhaEquipamentoForm(tipoVal = "Notebook", marcaVal = "", dataVal = dataLocal(), statusVal = "Em uso") {
     const container = $("#containerEquipamentosForm");
     const div = document.createElement("div");
     div.className = "linha-equipamento-form";
-    div.style.cssText = "background: var(--fundo-sutil); border: 1px solid var(--borda-suave); padding: 10px; border-radius: var(--raio); display: grid; gap: 8px;";
+    div.style.cssText = "background: #fafaf8; border: 1px solid var(--borda-suave); padding: 10px; border-radius: var(--raio); display: grid; gap: 8px;";
 
     div.innerHTML = `
     <div style="display: flex; justify-content: space-between; align-items: center;">
       <strong style="font-size: 0.75rem; color: var(--texto-suave); text-transform: uppercase;">Equipamento</strong>
       <button type="button" class="btn-icone btn-remover-equip-linha" style="color: var(--vermelho-aveludado);" title="Remover item">✕ Remover</button>
     </div>
-    <div style="display: grid; grid-template-columns: 2fr 2fr 70px; gap: 8px;">
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
       <label style="font-size: 0.75rem;">Tipo
         <select class="sel-tipo-equip-item">
-          <option>Atena (s) de Rádio</option>
-          <option>Bateria</option>
-          <option>Cabo</option>
+          <option>Celular</option>
           <option>Carregador p/ Notebook</option>
           <option>Carregador p/ Rádio</option>
-          <option>Carregador p/ Rádio Móvel</option>
-          <option>Celular</option>
-          <option>Gabinete</option>
-          <option>Impressora</option>
-          <option>Kit Teclado e Mouse</option>
-          <option>Mochila</option>
-          <option>Monitor</option>
           <option>Mouse</option>
           <option>Notebook</option>
-          <option>Par de Rádio - Locado</option>
           <option>Rádio</option>
-          <option>Rádio Fixo</option>
-          <option>Rádio Locado</option>
-          <option>Rádio Portátil</option>
-          <option>Rádio Transceptor</option>
-          <option>Régua de Energia</option>
           <option>Suporte para notebook</option>
           <option>Teclado</option>
-          <option>Televisão</option>
-          <option>Outro</option>
         </select>
       </label>
       <label style="font-size: 0.75rem;">Nome / Marca <input type="text" class="inp-marca-equip-item" placeholder="Ex.: Dell Inspiron" value="${escapar(marcaVal)}"></label>
-      <label style="font-size: 0.75rem;">1 <input type="number" class="inp-qtd-equip-item" min="1" max="50" value="${escapar(qtdVal)}" style="width: 100%; padding: 6px; text-align: center; font-weight: 600;"></label>
     </div>
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
       <label style="font-size: 0.75rem;">Data Entrega <input type="date" class="inp-data-equip-item" value="${escapar(dataVal)}"></label>
@@ -2021,10 +1879,6 @@ function alternarTela(tela) {
     $("#btnMenuFuncionarios").classList.toggle("ativo", tela === "funcionarios");
     $("#btnMenuEstoque").classList.toggle("ativo", tela === "estoque");
     $("#btnMenuAuditoria").classList.toggle("ativo", tela === "auditoria");
-
-    document.querySelectorAll("#bottomNav .bottom-nav-item").forEach((b) => {
-        b.classList.toggle("ativo", b.dataset.tela === tela);
-    });
 
     $("#sidebar").classList.remove("aberta");
 
@@ -2862,7 +2716,7 @@ function exportarEstoqueGeralPdf() {
     GAIOLAS_PADRAO.forEach((g) => {
         const lista = estado.estoque.filter((i) => i.gaiola === g.id);
         if (!lista.length) return;
-        html += `<h2 style="font-size:14px; margin:18px 0 6px;">${escapar(g.nome)} <span style="font-weight:normal; color:#6e7076; font-size:11px;">(${lista.length} item(ns))</span></h2>`;
+        html += `<h2 style="font-size:14px; margin:18px 0 6px;">${escapar(g.nome)} <span style="font-weight:normal; color:#6f7480; font-size:11px;">(${lista.length} item(ns))</span></h2>`;
         html += `<table><thead><tr><th>Nome / Descrição</th><th>Classificação</th><th>Tipo</th><th>Setor</th><th>Status</th><th>Data de Entrada</th></tr></thead><tbody>`;
         lista.forEach((i) => {
             html += `<tr><td><strong>${escapar(i.nome)}</strong></td><td>${escapar(i.classificacao)}</td><td>${escapar(i.tipo)}</td><td>${escapar(i.setor)}</td><td>${escapar(i.status)}</td><td>${escapar(formatarData(i.dataEntrada))}</td></tr>`;
@@ -3080,19 +2934,19 @@ function gerarPlanilha(abas, nomeArquivo, btn, titulo) {
 function imprimirComoPdf(titulo, subtitulo, htmlConteudo) {
     const iframe = document.createElement("iframe");
     iframe.setAttribute("aria-hidden", "true");
-    iframe.style.cssText = "position:fixed; right:0; bottom:0; width:0; height:0; border:0; visibility:hidden;";
+    iframe.style.cssText = "position:fixed; left:-10000px; top:0; width:794px; height:1123px; border:0; opacity:0; pointer-events:none;";
     document.body.appendChild(iframe);
 
     const doc = iframe.contentWindow.document;
     doc.open();
     doc.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>${escapar(titulo)}</title>
 <style>
-  body { font-family: Arial, Helvetica, sans-serif; color: #2c2e33; margin: 24px; }
+  body { font-family: Arial, Helvetica, sans-serif; color: #2d3036; margin: 24px; }
   h1 { font-size: 18px; margin: 0 0 4px; }
-  p.sub { font-size: 12px; color: #6e7076; margin: 0 0 16px; }
+  p.sub { font-size: 12px; color: #6f7480; margin: 0 0 16px; }
   table { width: 100%; border-collapse: collapse; font-size: 11px; }
-  th { background: #2c2e33; color: #ffffff; text-align: left; padding: 6px 8px; }
-  td { border-bottom: 1px solid #d9d5cb; padding: 6px 8px; vertical-align: top; }
+  th { background: #25282e; color: #ffffff; text-align: left; padding: 6px 8px; }
+  td { border-bottom: 1px solid #e6e6e2; padding: 6px 8px; vertical-align: top; }
   tr { page-break-inside: avoid; }
   .badge { font-weight: bold; }
   @page { margin: 14mm; }
@@ -3111,6 +2965,7 @@ ${htmlConteudo}
             iframe.contentWindow.focus();
             iframe.contentWindow.onafterprint = limpar;
             iframe.contentWindow.print();
+            setTimeout(() => iframe.remove(), 60000); // navegadores sem onafterprint
         } catch (e) {
             mostrarAviso("Não foi possível gerar o PDF.");
             limpar();

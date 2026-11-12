@@ -1,3 +1,4 @@
-# Backups têm dados reais: nunca enviar para o GitHub
+# Backups e arquivos de auditoria têm dados reais: nunca enviar para o GitHub
 backup-*.json
 backup-ti-obras-*.json
+auditoria-arquivada-*.json

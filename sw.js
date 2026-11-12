@@ -1,5 +1,3 @@
-/* Service Worker — TI em Obras
-   Cache offline + atualizações automáticas. */
 const CACHE = "ti-obras-cache-v4";
 const ARQUIVOS = [
     "./",
@@ -7,21 +5,17 @@ const ARQUIVOS = [
     "./script.js",
     "./style.css",
     "./manifest.json",
-    "./favicon.png",
-    "./logo.jpg",
-    "./icon-192.png",
-    "./icon-512.png",
-    "./icon-maskable-512.png",
-    "./apple-touch-icon.png"
+    "./logo.jpg"
 ];
 
 self.addEventListener("install", (e) => {
     self.skipWaiting();
+    // Cada arquivo é guardado separadamente: se um deles não existir,
+    // os outros continuam sendo guardados (com addAll, um arquivo ausente faria todos falharem).
     e.waitUntil(
-        caches.open(CACHE).then(async (c) => {
-            // Um arquivo que falhar não derruba o restante do cache
-            await Promise.allSettled(ARQUIVOS.map((a) => c.add(a)));
-        })
+        caches.open(CACHE).then((c) =>
+            Promise.all(ARQUIVOS.map((url) => c.add(new Request(url, { cache: "reload" })).catch(() => {})))
+        )
     );
 });
 
@@ -33,33 +27,29 @@ self.addEventListener("activate", (e) => {
     );
 });
 
+// Sempre tenta a internet primeiro; só usa o cache se estiver offline
 self.addEventListener("fetch", (e) => {
     const req = e.request;
     if (req.method !== "GET") return;
+    if (req.headers.has("range")) return;
 
-    // Fontes do Google e outros domínios: deixa a internet cuidar
     const url = new URL(req.url);
-    if (url.origin !== self.location.origin) return;
+    if (url.protocol !== "http:" && url.protocol !== "https:") return;
 
-    // Internet primeiro; se estiver offline, usa o cache (navegações caem na tela inicial)
     e.respondWith(
-        (async () => {
-            try {
-                const resp = await fetch(req);
-                if (resp && resp.ok) {
+        fetch(req, { cache: "no-cache" })
+            .then((resp) => {
+                // Só guarda respostas válidas (evita erro 404/500 e respostas parciais no cache)
+                if (resp && (resp.ok || resp.type === "opaque")) {
                     const copia = resp.clone();
                     caches.open(CACHE).then((c) => c.put(req, copia)).catch(() => {});
-                    return resp;
                 }
-            } catch (erro) { /* offline: usa cache abaixo */ }
-
-            const emCache = await caches.match(req);
-            if (emCache) return emCache;
-            if (req.mode === "navigate") {
-                const inicio = await caches.match("./index.html");
-                if (inicio) return inicio;
-            }
-            return new Response("Sem conexão e conteúdo não disponível em cache.", { status: 503, headers: { "Content-Type": "text/plain; charset=utf-8" } });
-        })()
+                return resp;
+            })
+            .catch(() =>
+                caches.match(req, { ignoreSearch: true })
+                    .then((r) => r || (req.mode === "navigate" ? caches.match("./index.html") : null))
+                    .then((r) => r || Response.error())
+            )
     );
 });
