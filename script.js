@@ -1918,7 +1918,7 @@ function adicionarLinhaEquipamentoForm(tipoVal = "Notebook", marcaVal = "", data
     const container = $("#containerEquipamentosForm");
     const div = document.createElement("div");
     div.className = "linha-equipamento-form";
-    div.style.cssText = "background: #fafaf8; border: 1px solid var(--borda-suave); padding: 10px; border-radius: var(--raio); display: grid; gap: 8px;";
+    div.style.cssText = "background: var(--fundo-sutil); border: 1px solid var(--borda-suave); padding: 10px; border-radius: var(--raio); display: grid; gap: 8px;";
 
     div.innerHTML = `
     <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -2862,7 +2862,7 @@ function exportarEstoqueGeralPdf() {
     GAIOLAS_PADRAO.forEach((g) => {
         const lista = estado.estoque.filter((i) => i.gaiola === g.id);
         if (!lista.length) return;
-        html += `<h2 style="font-size:14px; margin:18px 0 6px;">${escapar(g.nome)} <span style="font-weight:normal; color:#6f7480; font-size:11px;">(${lista.length} item(ns))</span></h2>`;
+        html += `<h2 style="font-size:14px; margin:18px 0 6px;">${escapar(g.nome)} <span style="font-weight:normal; color:#6e7076; font-size:11px;">(${lista.length} item(ns))</span></h2>`;
         html += `<table><thead><tr><th>Nome / Descrição</th><th>Classificação</th><th>Tipo</th><th>Setor</th><th>Status</th><th>Data de Entrada</th></tr></thead><tbody>`;
         lista.forEach((i) => {
             html += `<tr><td><strong>${escapar(i.nome)}</strong></td><td>${escapar(i.classificacao)}</td><td>${escapar(i.tipo)}</td><td>${escapar(i.setor)}</td><td>${escapar(i.status)}</td><td>${escapar(formatarData(i.dataEntrada))}</td></tr>`;
@@ -3087,12 +3087,12 @@ function imprimirComoPdf(titulo, subtitulo, htmlConteudo) {
     doc.open();
     doc.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>${escapar(titulo)}</title>
 <style>
-  body { font-family: Arial, Helvetica, sans-serif; color: #2d3036; margin: 24px; }
+  body { font-family: Arial, Helvetica, sans-serif; color: #2c2e33; margin: 24px; }
   h1 { font-size: 18px; margin: 0 0 4px; }
-  p.sub { font-size: 12px; color: #6f7480; margin: 0 0 16px; }
+  p.sub { font-size: 12px; color: #6e7076; margin: 0 0 16px; }
   table { width: 100%; border-collapse: collapse; font-size: 11px; }
-  th { background: #25282e; color: #ffffff; text-align: left; padding: 6px 8px; }
-  td { border-bottom: 1px solid #e6e6e2; padding: 6px 8px; vertical-align: top; }
+  th { background: #2c2e33; color: #ffffff; text-align: left; padding: 6px 8px; }
+  td { border-bottom: 1px solid #d9d5cb; padding: 6px 8px; vertical-align: top; }
   tr { page-break-inside: avoid; }
   .badge { font-weight: bold; }
   @page { margin: 14mm; }
