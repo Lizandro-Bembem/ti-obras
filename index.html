@@ -14,7 +14,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=7">
+  <link rel="stylesheet" href="style.css?v=8">
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#161616">
 </head>
@@ -753,6 +753,10 @@
       </select>
     </label>
 
+    <label id="lblLocalOutro" hidden>Qual local?
+      <input name="localOutro" id="campoLocalOutro" placeholder="Digite o local">
+    </label>
+
     <div style="font-size: 0.82rem; font-weight: 600; color: var(--texto-principal); margin-top: 4px;">Equipamento(s) Entregue(s)</div>
     <div id="containerEquipamentosForm" style="display: grid; gap: 10px;"></div>
     <button type="button" class="btn btn-light" id="btnAddEquipForm" style="width: 100%; border-style: dashed;">+ Adicionar outro equipamento</button>
@@ -1077,6 +1081,6 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="script.js?v=7"></script>
+<script src="script.js?v=8"></script>
 </body>
 </html>

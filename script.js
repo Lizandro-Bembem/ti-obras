@@ -1355,6 +1355,7 @@ function initFuncionariosEventos() {
 
     // Cadastro / edição de funcionário
     $("#btnNovoFuncionario").addEventListener("click", () => abrirModalFuncionario());
+    $("#selLocalFunc").addEventListener("change", atualizarCampoLocalOutro);
     $("#cancelaFuncionario").addEventListener("click", () => $("#dlgFuncionario").close());
 
     $("#formFuncionario").addEventListener("submit", (ev) => {
@@ -1384,6 +1385,12 @@ function initFuncionariosEventos() {
             }
         });
 
+        let localEscolhido = f.get("local") || "";
+        if (localEscolhido === "__outro__") {
+            localEscolhido = (f.get("localOutro") || "").trim();
+            if (!localEscolhido) { mostrarAviso("Digite qual é o local."); return; }
+        }
+
         if (!nome) { mostrarAviso("Preencha o nome do funcionário."); return; }
         if (equipamentos.length === 0) { mostrarAviso("Cadastre pelo menos 1 equipamento."); return; }
         if (equipamentos.some((e) => !e.marca)) { mostrarAviso("Preencha o nome/marca de todos os equipamentos."); return; }
@@ -1396,7 +1403,7 @@ function initFuncionariosEventos() {
         const dados = {
             nome,
             empresa: f.get("empresa") || "Campbel Construções",
-            local: f.get("local") || "",
+            local: localEscolhido,
             equipamentos,
             equipamento: equipamentos.map((e) => `${e.tipo} (${e.marca})`).join(", "),
             status: equipamentos.some((e) => e.status === "Em manutenção") ? "Em manutenção" : "Em uso",
@@ -1844,6 +1851,15 @@ function abrirModalDetalhesFuncionario(func) {
     $("#dlgDetalhesFunc").showModal();
 }
 
+function atualizarCampoLocalOutro() {
+    const sel = $("#selLocalFunc");
+    const lbl = $("#lblLocalOutro");
+    if (!sel || !lbl) return;
+    const outro = sel.value === "__outro__";
+    lbl.hidden = !outro;
+    if (!outro) $("#campoLocalOutro").value = "";
+}
+
 function abrirModalFuncionario(func = null) {
     funcionarioEmEdicaoId = func ? func.id : null;
     $("#tituloDlgFunc").textContent = func ? "Editar Funcionário" : "Cadastrar Funcionário";
@@ -1857,15 +1873,23 @@ function abrirModalFuncionario(func = null) {
         const obrasOrdenadas = [...estado.obras].sort((a, b) => a.nome.localeCompare(b.nome));
         selLocal.innerHTML = obrasOrdenadas.map(obra =>
             `<option value="${escapar(obra.nome)}">${escapar(obra.nome)}</option>`
-        ).join("");
+        ).join("") + `<option value="__outro__">Outro</option>`;
     }
+    atualizarCampoLocalOutro();
 
     if (func) {
         const f = $("#formFuncionario").elements;
         f.nome.value = func.nome;
 
         if (f.empresa) f.empresa.value = func.empresa || "Campbel Construções";
-        if (f.local && func.local) f.local.value = func.local;
+        if (f.local && func.local) {
+            f.local.value = func.local;
+            if (f.local.value !== func.local) {
+                f.local.value = "__outro__";
+                $("#campoLocalOutro").value = func.local;
+            }
+            atualizarCampoLocalOutro();
+        }
 
         f.termoStatus.value = func.termoStatus || "Pendente";
         const pendente = (func.termoStatus || "Pendente") === "Pendente";
