@@ -1395,6 +1395,8 @@ function initFuncionariosEventos() {
 
         const dados = {
             nome,
+            empresa: f.get("empresa") || "Campbel Construções",
+            local: f.get("local") || "",
             equipamentos,
             equipamento: equipamentos.map((e) => `${e.tipo} (${e.marca})`).join(", "),
             status: equipamentos.some((e) => e.status === "Em manutenção") ? "Em manutenção" : "Em uso",
@@ -1823,6 +1825,10 @@ function abrirModalDetalhesFuncionario(func) {
 
     $("#detalheFuncCorpo").innerHTML = `
     <div class="item-detalhe-bloco">
+      <strong>Empresa / Local</strong>
+      <span>${escapar(func.empresa || "-")} — ${escapar(func.local || "-")}</span>
+    </div>
+    <div class="item-detalhe-bloco">
       <strong>Equipamentos Titulares</strong>
       <span>${equipsHtml}</span>
     </div>
@@ -2122,7 +2128,7 @@ function renderFuncionarios() {
     atualizarContadoresCaixasFunc();
     const busca = $("#buscaFuncionario").value.trim().toLowerCase();
     const lista = estado.funcionarios
-        .filter((f) => !busca || f.nome.toLowerCase().includes(busca))
+        .filter((f) => !busca || `${f.nome} ${f.empresa || ""}`.toLowerCase().includes(busca))
         .sort(porNome);
 
     $("#corpoFuncionarios").innerHTML = lista.map((f) => {
@@ -2135,7 +2141,7 @@ function renderFuncionarios() {
 
         return `
       <tr class="linha-clicavel" data-abrir-detalhes-func="${escapar(f.id)}">
-        <td><span class="nome-destaque"><strong>${escapar(f.nome)}</strong></span> ${etiqueta}</td>
+        <td><span class="nome-destaque"><strong>${escapar(f.nome)}</strong></span> ${etiqueta}${f.empresa ? `<br><small style="color: var(--texto-suave);">${escapar(f.empresa)}</small>` : ""}</td>
         <td style="text-align: right;">
           <button class="btn btn-light" type="button" style="padding: 4px 8px; font-size: 0.75rem;">Ver Detalhes</button>
           <button class="btn btn-light" type="button" data-remover-ativo="${escapar(f.id)}" style="padding: 4px 8px; font-size: 0.75rem; color: var(--vermelho-aveludado); border-color: var(--vermelho-borda-suave); margin-left: 4px;">Remover</button>

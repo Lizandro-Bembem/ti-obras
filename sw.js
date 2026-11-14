@@ -1,6 +1,6 @@
 /* Service Worker — TI em Obras
    Cache offline + atualizações automáticas. */
-const CACHE = "ti-obras-cache-v6";
+const CACHE = "ti-obras-cache-v7";
 const ARQUIVOS = [
     "./",
     "./index.html",
@@ -20,7 +20,7 @@ self.addEventListener("install", (e) => {
     e.waitUntil(
         caches.open(CACHE).then(async (c) => {
             // Um arquivo que falhar não derruba o restante do cache
-            await Promise.allSettled(ARQUIVOS.map((a) => c.add(a)));
+            await Promise.allSettled(ARQUIVOS.map((a) => c.add(new Request(a, { cache: "reload" }))));
         })
     );
 });
@@ -45,7 +45,7 @@ self.addEventListener("fetch", (e) => {
     e.respondWith(
         (async () => {
             try {
-                const resp = await fetch(req);
+                const resp = await fetch(req, { cache: "no-cache" });
                 if (resp && resp.ok) {
                     const copia = resp.clone();
                     caches.open(CACHE).then((c) => c.put(req, copia)).catch(() => {});
@@ -53,7 +53,7 @@ self.addEventListener("fetch", (e) => {
                 }
             } catch (erro) { /* offline: usa cache abaixo */ }
 
-            const emCache = await caches.match(req);
+            const emCache = await caches.match(req, { ignoreSearch: true });
             if (emCache) return emCache;
             if (req.mode === "navigate") {
                 const inicio = await caches.match("./index.html");
