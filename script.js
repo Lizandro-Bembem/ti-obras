@@ -1099,7 +1099,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // ----- Abas de funcionários -----
     on("#caixaAbaAtivos", "click", () => alternarAbaFuncionarios("ativos"));
     on("#caixaAbaDesligados", "click", () => alternarAbaFuncionarios("desligados"));
-    on("#buscaFuncionario", "input", renderFuncionarios);
+    on("#buscaFuncionario", "input", () => { grupoFuncAberto = null; renderFuncionarios(); });
     on("#buscaDesligado", "input", renderDesligados);
 
     // ----- Reativar funcionário desligado -----
@@ -1586,8 +1586,28 @@ function initFuncionariosEventos() {
         }
         const linha = ev.target.closest("[data-abrir-detalhes-func]");
         if (!linha) return;
+        const chave = linha.dataset.grupoFunc;
+        const doGrupo = estado.funcionarios.filter((x) => chaveNomeFunc(x.nome) === chave);
+        if (doGrupo.length > 1) {
+            grupoFuncAberto = chave;
+            renderFuncionarios();
+            return;
+        }
         const item = estado.funcionarios.find((x) => x.id === linha.dataset.abrirDetalhesFunc);
         if (item) abrirModalDetalhesFuncionario(item);
+    });
+
+    $("#relacaoFunc").addEventListener("click", (ev) => {
+        if (ev.target.closest("[data-voltar-func]")) {
+            grupoFuncAberto = null;
+            renderFuncionarios();
+            return;
+        }
+        const btn = ev.target.closest("[data-abrir-registro-func]");
+        if (btn) {
+            const item = estado.funcionarios.find((x) => x.id === btn.dataset.abrirRegistroFunc);
+            if (item) abrirModalDetalhesFuncionario(item);
+        }
     });
 
     $("#corpoDesligados").addEventListener("click", (ev) => {
@@ -1871,9 +1891,10 @@ function abrirModalFuncionario(func = null) {
     const selLocal = $("#selLocalFunc");
     if (selLocal) {
         const obrasOrdenadas = [...estado.obras].sort((a, b) => a.nome.localeCompare(b.nome));
+        const jaTemSede = obrasOrdenadas.some((o) => o.nome.trim().toLowerCase() === "sede");
         selLocal.innerHTML = obrasOrdenadas.map(obra =>
             `<option value="${escapar(obra.nome)}">${escapar(obra.nome)}</option>`
-        ).join("") + `<option value="__outro__">Outro</option>`;
+        ).join("") + (jaTemSede ? "" : `<option value="Sede">Sede</option>`) + `<option value="__outro__">Outro</option>`;
     }
     atualizarCampoLocalOutro();
 
@@ -2106,7 +2127,7 @@ function pedirSenhaRemoverDesligado(id) {
 function atualizarContadoresCaixasFunc() {
     const a = $("#qtdFuncAtivos");
     const d = $("#qtdFuncDesligados");
-    if (a) a.textContent = estado.funcionarios.length;
+    if (a) a.textContent = new Set(estado.funcionarios.map((f) => chaveNomeFunc(f.nome))).size;
     if (d) d.textContent = estado.desligados.length;
 }
 
@@ -2148,32 +2169,92 @@ function renderFiltros() {
     preencher($("#filtroTipo"), tipos.map((t) => [t, t]), "Todos");
 }
 
+let grupoFuncAberto = null;
+
+function chaveNomeFunc(nome) {
+    return String(nome || "").trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ");
+}
+
+function agruparFuncionarios(registros) {
+    const mapa = new Map();
+    registros.forEach((r) => {
+        const k = chaveNomeFunc(r.nome);
+        if (!mapa.has(k)) mapa.set(k, { chave: k, nome: r.nome, registros: [] });
+        mapa.get(k).registros.push(r);
+    });
+    return [...mapa.values()].sort(porNome);
+}
+
+function renderRelacaoFuncionario(grupo) {
+    const regs = grupo.registros;
+    const totalEquips = regs.reduce((t, r) => t + (r.equipamentos || []).length, 0);
+    const cards = regs.map((r, i) => {
+        const itens = (r.equipamentos || []).map((eq) => `
+        <div class="relacao-func-item">• <strong>${escapar(eq.tipo)}</strong>: ${escapar(eq.marca)} (Entregue em: ${formatarDataSimples(eq.dataEntrega)}) — <span style="color: ${eq.status === "Em manutenção" ? "var(--vermelho-aveludado)" : "var(--texto-principal)"};">${escapar(eq.status)}</span></div>`).join("") || "-";
+        const reserva = r.reserva && r.reserva.tem === "sim"
+            ? `<div class="relacao-func-item">• <strong>Reserva</strong>: ${escapar(r.reserva.equipamento)} (Entregue em: ${formatarDataSimples(r.reserva.dataEntrega)})</div>` : "";
+        const origem = [r.empresa, r.local].filter(Boolean).join(" / ");
+        return `
+      <div class="relacao-func-card">
+        <div class="relacao-func-card-topo">
+          <strong>Registro ${regs.length - i}${origem ? ` — ${escapar(origem)}` : ""}</strong>
+          <button class="btn btn-light" type="button" data-abrir-registro-func="${escapar(r.id)}" style="padding: 4px 8px; font-size: 0.75rem;">Ver Detalhes</button>
+        </div>
+        ${itens}${reserva}
+        <div class="relacao-func-termo">
+          Termo: <strong>${escapar(r.termoStatus || "Pendente")}</strong> |
+          Entregue em: <strong>${formatarDataSimples(r.dataTermoEntregue)}</strong> |
+          Devolvido assinado em: <strong>${formatarDataSimples(r.dataTermoDevolvido)}</strong>
+        </div>
+      </div>`;
+    }).join("");
+
+    return `
+    <div class="relacao-func-topo">
+      <button class="btn btn-light" type="button" data-voltar-func="1">← Voltar</button>
+      <button class="relacao-func-nome" type="button" data-voltar-func="1" title="Clique para voltar à lista">${escapar(grupo.nome)}</button>
+    </div>
+    <div class="relacao-func-resumo">${totalEquips} ${totalEquips === 1 ? "equipamento" : "equipamentos"} em ${regs.length} ${regs.length === 1 ? "registro" : "registros"}</div>
+    ${cards}`;
+}
+
 function renderFuncionarios() {
     atualizarContadoresCaixasFunc();
     const busca = $("#buscaFuncionario").value.trim().toLowerCase();
-    const lista = estado.funcionarios
-        .filter((f) => !busca || `${f.nome} ${f.empresa || ""}`.toLowerCase().includes(busca))
-        .sort(porNome);
+    const registros = estado.funcionarios
+        .filter((f) => !busca || `${f.nome} ${f.empresa || ""}`.toLowerCase().includes(busca));
+    const grupos = agruparFuncionarios(registros);
 
-    $("#corpoFuncionarios").innerHTML = lista.map((f) => {
+    $("#corpoFuncionarios").innerHTML = grupos.map((g) => {
+        const regs = g.registros;
+        const unico = regs.length === 1;
         let etiqueta = "";
-        const temTermoPendente = f.termoStatus === "Pendente" || (f.reserva && f.reserva.termoStatus === "Pendente");
-        const temManutencao = (f.equipamentos || []).some((eq) => eq.status === "Em manutenção") || f.status === "Em manutenção";
+        const temTermoPendente = regs.some((f) => f.termoStatus === "Pendente" || (f.reserva && f.reserva.termoStatus === "Pendente"));
+        const temManutencao = regs.some((f) => (f.equipamentos || []).some((eq) => eq.status === "Em manutenção") || f.status === "Em manutenção");
 
         if (temManutencao) etiqueta = `<span class="etiqueta-alerta-sutil">Manutenção</span>`;
         else if (temTermoPendente) etiqueta = `<span class="etiqueta-pendente-sutil">Termo Pendente</span>`;
 
+        const empresas = [...new Set(regs.map((f) => f.empresa).filter(Boolean))].join(" / ");
+
         return `
-      <tr class="linha-clicavel" data-abrir-detalhes-func="${escapar(f.id)}">
-        <td><span class="nome-destaque"><strong>${escapar(f.nome)}</strong></span> ${etiqueta}${f.empresa ? `<br><small style="color: var(--texto-suave);">${escapar(f.empresa)}</small>` : ""}</td>
+      <tr class="linha-clicavel" data-abrir-detalhes-func="${escapar(regs[0].id)}" data-grupo-func="${escapar(g.chave)}">
+        <td><span class="nome-destaque"><strong>${escapar(g.nome)}</strong></span> ${etiqueta}${empresas ? `<br><small style="color: var(--texto-suave);">${escapar(empresas)}</small>` : ""}</td>
         <td style="text-align: right;">
           <button class="btn btn-light" type="button" style="padding: 4px 8px; font-size: 0.75rem;">Ver Detalhes</button>
-          <button class="btn btn-light" type="button" data-remover-ativo="${escapar(f.id)}" style="padding: 4px 8px; font-size: 0.75rem; color: var(--vermelho-aveludado); border-color: var(--vermelho-borda-suave); margin-left: 4px;">Remover</button>
+          ${unico ? `<button class="btn btn-light" type="button" data-remover-ativo="${escapar(regs[0].id)}" style="padding: 4px 8px; font-size: 0.75rem; color: var(--vermelho-aveludado); border-color: var(--vermelho-borda-suave); margin-left: 4px;">Remover</button>` : ""}
         </td>
       </tr>`;
     }).join("");
 
-    $("#vazioFunc").hidden = lista.length > 0;
+    $("#vazioFunc").hidden = grupos.length > 0;
+
+    // Relação aberta (funcionário com mais de um registro)
+    const grupoAberto = grupoFuncAberto ? grupos.find((g) => g.chave === grupoFuncAberto && g.registros.length > 1) : null;
+    if (!grupoAberto) grupoFuncAberto = null;
+    $("#wrapListaFunc").hidden = !!grupoAberto;
+    $("#relacaoFunc").hidden = !grupoAberto;
+    $("#relacaoFunc").innerHTML = grupoAberto ? renderRelacaoFuncionario(grupoAberto) : "";
 }
 
 function renderGradeObras() {
@@ -3147,3 +3228,30 @@ ${htmlConteudo}
         }
     }, 300);
 }
+
+/* Primeira letra sempre maiúscula nos campos de texto */
+(function () {
+    const tiposLivres = new Set(["text", "search", "textarea", ""]);
+    function tipoDe(el) {
+        return el.tagName === "TEXTAREA" ? "textarea" : (el.getAttribute("type") || "").toLowerCase();
+    }
+    document.addEventListener("focusin", (ev) => {
+        const el = ev.target;
+        if (!el || !el.matches || !el.matches("input, textarea") || el.closest("#telaLogin")) return;
+        if (tiposLivres.has(tipoDe(el))) el.setAttribute("autocapitalize", "sentences");
+    });
+    document.addEventListener("input", (ev) => {
+        const el = ev.target;
+        if (!el || !el.matches || !el.matches("input, textarea") || el.closest("#telaLogin")) return;
+        if (!tiposLivres.has(tipoDe(el))) return;
+        const v = el.value;
+        const i = v.search(/\S/);
+        if (i < 0) return;
+        const c = v.charAt(i);
+        const maius = c.toLocaleUpperCase("pt-BR");
+        if (c === maius) return;
+        const ini = el.selectionStart, fim = el.selectionEnd;
+        el.value = v.slice(0, i) + maius + v.slice(i + 1);
+        try { el.setSelectionRange(ini, fim); } catch (e) { /* campo sem seleção */ }
+    }, true);
+})();

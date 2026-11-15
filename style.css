@@ -1157,3 +1157,13 @@ body:not(.autenticado) .barra-instalar { display: none !important; }
     body.menu-recolhido .sidebar { background: var(--cinza-sidebar); }
     body.menu-recolhido .sidebar .menu-item-btn.ativo { background: var(--cinza-sidebar-item); }
 }
+
+/* Relação de equipamentos por funcionário */
+.relacao-func { padding: 4px 2px 8px; }
+.relacao-func-topo { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+.relacao-func-nome { font-size: 1.05rem; font-weight: 700; cursor: pointer; background: none; border: 0; padding: 0; color: inherit; text-align: left; }
+.relacao-func-resumo { font-size: 0.8rem; color: var(--texto-suave); margin-bottom: 10px; }
+.relacao-func-card { border: 1px solid var(--borda-suave); border-radius: 8px; padding: 10px 12px; margin-bottom: 10px; }
+.relacao-func-card-topo { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 6px; }
+.relacao-func-item { font-size: 0.85rem; margin-bottom: 3px; }
+.relacao-func-termo { font-size: 0.78rem; color: var(--texto-suave); margin-top: 6px; padding-top: 6px; border-top: 1px dashed var(--borda-suave); }

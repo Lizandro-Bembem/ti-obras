@@ -14,7 +14,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=8">
+  <link rel="stylesheet" href="style.css?v=9">
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#161616">
 </head>
@@ -310,7 +310,7 @@
             <input type="search" id="buscaFuncionario" placeholder="Pesquisar funcionário ativo...">
           </div>
         </div>
-        <div class="tabela-wrap">
+        <div class="tabela-wrap" id="wrapListaFunc">
           <table>
             <thead>
             <tr>
@@ -322,6 +322,7 @@
           </table>
           <p class="vazio" id="vazioFunc" hidden>Nenhum funcionário ativo cadastrado.</p>
         </div>
+        <div id="relacaoFunc" class="relacao-func" hidden></div>
       </section>
 
       <section class="painel" id="painelListaDesligados" hidden>
@@ -1081,6 +1082,6 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="script.js?v=8"></script>
+<script src="script.js?v=9"></script>
 </body>
 </html>
