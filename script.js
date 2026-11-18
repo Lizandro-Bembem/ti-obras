@@ -1099,7 +1099,8 @@ document.addEventListener("DOMContentLoaded", () => {
     // ----- Abas de funcionários -----
     on("#caixaAbaAtivos", "click", () => alternarAbaFuncionarios("ativos"));
     on("#caixaAbaDesligados", "click", () => alternarAbaFuncionarios("desligados"));
-    on("#buscaFuncionario", "input", () => { grupoFuncAberto = null; renderFuncionarios(); });
+    on("#buscaFuncionario", "input", renderFuncionarios);
+    on("#buscaEquipFunc", "input", renderFuncionarios);
     on("#buscaDesligado", "input", renderDesligados);
 
     // ----- Reativar funcionário desligado -----
@@ -1277,8 +1278,10 @@ function initFuncionariosEventos() {
         if (desligado) {
             estado.desligados = estado.desligados.filter((x) => x.id !== desligado.id);
             const reativado = {
-                id: desligado.idOriginal || novoId("f"),
+                id: desligado.idOriginal && !estado.funcionarios.some((x) => x.id === desligado.idOriginal) ? desligado.idOriginal : novoId("f"),
                 nome: desligado.nome,
+                empresa: desligado.empresa || "Campbel Construções",
+                local: desligado.local || "",
                 equipamentos: desligado.equipamentosOriginais || [{ tipo: "Notebook", marca: "Equipamento Restabelecido", dataEntrega: dataLocal(), status: "Em uso" }],
                 status: "Em uso",
                 termoStatus: "Pendente",
@@ -1426,13 +1429,18 @@ function initFuncionariosEventos() {
                 if (!tinhaManutencaoAntes && dados.status === "Em manutenção") abrirModalReserva(funcExistente);
             }
         } else {
+            // Se o nome já existe, usa a mesma grafia para o funcionário continuar aparecendo uma única vez
+            const existente = estado.funcionarios.find((x) => chaveNomeFunc(x.nome) === chaveNomeFunc(nome));
+            if (existente) dados.nome = existente.nome;
             const novoFunc = { id: novoId("f"), ...dados, reserva: { tem: "nao" } };
             estado.funcionarios.unshift(novoFunc);
-            registrar("novo", "Funcionário cadastrado", novoFunc.nome, "-", `Equipamentos: ${novoFunc.equipamento}`);
+            registrar("novo", existente ? "Equipamento adicionado a funcionário" : "Funcionário cadastrado", novoFunc.nome, "-", `Equipamentos: ${novoFunc.equipamento}`);
             salvar();
             $("#dlgFuncionario").close();
             renderFuncionarios();
-            mostrarAviso("Funcionário cadastrado com sucesso.");
+            mostrarAviso(existente
+                ? `${novoFunc.nome} já estava na lista. Equipamento(s) adicionado(s) à relação dele(a).`
+                : "Funcionário cadastrado com sucesso.");
             if (dados.status === "Em manutenção") abrirModalReserva(novoFunc);
         }
     });
@@ -1525,6 +1533,8 @@ function initFuncionariosEventos() {
             id: novoId("d"),
             idOriginal: func.id,
             nome: func.nome,
+            empresa: func.empresa || "",
+            local: func.local || "",
             dataDesligamento: dataDeslig,
             equipamentosOriginais: func.equipamentos,
             equipamentoVinculado: (func.equipamentos || []).map((e) => `${e.tipo} (${e.marca})`).join(", "),
@@ -1587,22 +1597,20 @@ function initFuncionariosEventos() {
         const linha = ev.target.closest("[data-abrir-detalhes-func]");
         if (!linha) return;
         const chave = linha.dataset.grupoFunc;
-        const doGrupo = estado.funcionarios.filter((x) => chaveNomeFunc(x.nome) === chave);
-        if (doGrupo.length > 1) {
-            grupoFuncAberto = chave;
-            renderFuncionarios();
+        const doGrupo = registrosDoFuncionario(chave);
+        // Mais de 1 equipamento no nome do funcionário: abre a janela com a relação completa
+        if (contarEquipsFunc(doGrupo) > 1) {
+            abrirModalRelacaoFuncionario(chave);
             return;
         }
         const item = estado.funcionarios.find((x) => x.id === linha.dataset.abrirDetalhesFunc);
         if (item) abrirModalDetalhesFuncionario(item);
     });
 
-    $("#relacaoFunc").addEventListener("click", (ev) => {
-        if (ev.target.closest("[data-voltar-func]")) {
-            grupoFuncAberto = null;
-            renderFuncionarios();
-            return;
-        }
+    $("#fecharRelacaoFunc").addEventListener("click", () => $("#dlgRelacaoFunc").close());
+    // O evento "close" é assíncrono: só limpa se a janela não tiver sido reaberta nesse meio-tempo
+    $("#dlgRelacaoFunc").addEventListener("close", (ev) => { if (!ev.target.open) grupoFuncAberto = null; });
+    $("#relacaoFuncCorpo").addEventListener("click", (ev) => {
         const btn = ev.target.closest("[data-abrir-registro-func]");
         if (btn) {
             const item = estado.funcionarios.find((x) => x.id === btn.dataset.abrirRegistroFunc);
@@ -2185,49 +2193,105 @@ function agruparFuncionarios(registros) {
     return [...mapa.values()].sort(porNome);
 }
 
-function renderRelacaoFuncionario(grupo) {
-    const regs = grupo.registros;
-    const totalEquips = regs.reduce((t, r) => t + (r.equipamentos || []).length, 0);
-    const cards = regs.map((r, i) => {
-        const itens = (r.equipamentos || []).map((eq) => `
-        <div class="relacao-func-item">• <strong>${escapar(eq.tipo)}</strong>: ${escapar(eq.marca)} (Entregue em: ${formatarDataSimples(eq.dataEntrega)}) — <span style="color: ${eq.status === "Em manutenção" ? "var(--vermelho-aveludado)" : "var(--texto-principal)"};">${escapar(eq.status)}</span></div>`).join("") || "-";
-        const reserva = r.reserva && r.reserva.tem === "sim"
-            ? `<div class="relacao-func-item">• <strong>Reserva</strong>: ${escapar(r.reserva.equipamento)} (Entregue em: ${formatarDataSimples(r.reserva.dataEntrega)})</div>` : "";
+// Total de equipamentos (titulares + reserva) de um conjunto de registros do mesmo funcionário
+function contarEquipsFunc(regs) {
+    return regs.reduce((t, r) => t + (r.equipamentos || []).length + (r.reserva && r.reserva.tem === "sim" ? 1 : 0), 0);
+}
+
+function registrosDoFuncionario(chave) {
+    return estado.funcionarios.filter((x) => chaveNomeFunc(x.nome) === chave);
+}
+
+function textoBuscaEquip(eq) {
+    return chaveNomeFunc(`${eq.tipo || ""} ${eq.marca || ""} ${eq.status || ""}`);
+}
+
+function textoBuscaReserva(r) {
+    return r && r.tem === "sim" ? chaveNomeFunc(`reserva ${r.tipo || ""} ${r.marca || ""} ${r.equipamento || ""}`) : "";
+}
+
+function registroTemEquip(f, termo) {
+    if (!termo) return true;
+    return (f.equipamentos || []).some((eq) => textoBuscaEquip(eq).includes(termo)) || textoBuscaReserva(f.reserva).includes(termo);
+}
+
+function renderRelacaoFuncionario(regs) {
+    return regs.map((r) => {
         const origem = [r.empresa, r.local].filter(Boolean).join(" / ");
+        const itens = (r.equipamentos || []).map((eq) => `
+        <div class="relacao-func-equip">
+          <div>
+            <strong>${escapar(eq.tipo)}</strong>: ${escapar(eq.marca)}
+            <small>Entregue em: ${formatarDataSimples(eq.dataEntrega)}${origem ? ` · ${escapar(origem)}` : ""}</small>
+          </div>
+          <span class="${eq.status === "Em manutenção" ? "etiqueta-alerta-sutil" : "etiqueta-concluido-sutil"}">${escapar(eq.status || "Em uso")}</span>
+        </div>`).join("");
+        const reserva = r.reserva && r.reserva.tem === "sim" ? `
+        <div class="relacao-func-equip">
+          <div>
+            <strong>Reserva</strong>: ${escapar(r.reserva.equipamento)}
+            <small>Entregue em: ${formatarDataSimples(r.reserva.dataEntrega)}</small>
+          </div>
+          <span class="etiqueta-pendente-sutil">Reserva</span>
+        </div>` : "";
         return `
       <div class="relacao-func-card">
-        <div class="relacao-func-card-topo">
-          <strong>Registro ${regs.length - i}${origem ? ` — ${escapar(origem)}` : ""}</strong>
-          <button class="btn btn-light" type="button" data-abrir-registro-func="${escapar(r.id)}" style="padding: 4px 8px; font-size: 0.75rem;">Ver Detalhes</button>
-        </div>
         ${itens}${reserva}
         <div class="relacao-func-termo">
-          Termo: <strong>${escapar(r.termoStatus || "Pendente")}</strong> |
-          Entregue em: <strong>${formatarDataSimples(r.dataTermoEntregue)}</strong> |
-          Devolvido assinado em: <strong>${formatarDataSimples(r.dataTermoDevolvido)}</strong>
+          <span>Termo: <strong>${escapar(r.termoStatus || "Pendente")}</strong> · Entregue em: <strong>${formatarDataSimples(r.dataTermoEntregue)}</strong> · Devolvido assinado em: <strong>${formatarDataSimples(r.dataTermoDevolvido)}</strong></span>
+          <button class="btn btn-light" type="button" data-abrir-registro-func="${escapar(r.id)}" style="padding: 4px 8px; font-size: 0.75rem;">Ver Detalhes</button>
         </div>
       </div>`;
     }).join("");
+}
 
-    return `
-    <div class="relacao-func-topo">
-      <button class="btn btn-light" type="button" data-voltar-func="1">← Voltar</button>
-      <button class="relacao-func-nome" type="button" data-voltar-func="1" title="Clique para voltar à lista">${escapar(grupo.nome)}</button>
-    </div>
-    <div class="relacao-func-resumo">${totalEquips} ${totalEquips === 1 ? "equipamento" : "equipamentos"} em ${regs.length} ${regs.length === 1 ? "registro" : "registros"}</div>
-    ${cards}`;
+// Janela com a relação de todos os equipamentos de um funcionário (só quando tem mais de 1)
+function abrirModalRelacaoFuncionario(chave) {
+    grupoFuncAberto = chave;
+    const dlg = $("#dlgRelacaoFunc");
+    if (!atualizarModalRelacaoFuncionario()) return;
+    if (!dlg.open) dlg.showModal();
+}
+
+// Atualiza o conteúdo da janela; fecha se o funcionário não tiver mais de 1 equipamento
+function atualizarModalRelacaoFuncionario() {
+    const dlg = $("#dlgRelacaoFunc");
+    const regs = grupoFuncAberto ? registrosDoFuncionario(grupoFuncAberto) : [];
+    const total = contarEquipsFunc(regs);
+    if (total <= 1) {
+        grupoFuncAberto = null;
+        if (dlg.open) dlg.close();
+        return false;
+    }
+    $("#relacaoFuncTitulo").textContent = regs[0].nome;
+    $("#relacaoFuncResumo").textContent = `${total} equipamentos no nome deste funcionário`;
+    $("#relacaoFuncCorpo").innerHTML = renderRelacaoFuncionario(regs);
+    return true;
 }
 
 function renderFuncionarios() {
     atualizarContadoresCaixasFunc();
-    const busca = $("#buscaFuncionario").value.trim().toLowerCase();
+    const busca = chaveNomeFunc($("#buscaFuncionario").value);
+    const buscaEquip = chaveNomeFunc(($("#buscaEquipFunc") || { value: "" }).value);
     const registros = estado.funcionarios
-        .filter((f) => !busca || `${f.nome} ${f.empresa || ""}`.toLowerCase().includes(busca));
-    const grupos = agruparFuncionarios(registros);
+        .filter((f) => !busca || chaveNomeFunc(`${f.nome} ${f.empresa || ""}`).includes(busca));
+    // Agrupa antes do filtro de equipamento para manter todos os registros do funcionário
+    const grupos = agruparFuncionarios(registros)
+        .filter((g) => !buscaEquip || g.registros.some((r) => registroTemEquip(r, buscaEquip)));
 
     $("#corpoFuncionarios").innerHTML = grupos.map((g) => {
         const regs = g.registros;
         const unico = regs.length === 1;
+        const totalEquips = contarEquipsFunc(regs);
+        let achados = "";
+        if (buscaEquip) {
+            const lista = [];
+            regs.forEach((r) => {
+                (r.equipamentos || []).forEach((eq) => { if (textoBuscaEquip(eq).includes(buscaEquip)) lista.push(`${eq.tipo}: ${eq.marca}`); });
+                if (textoBuscaReserva(r.reserva).includes(buscaEquip)) lista.push(`Reserva: ${r.reserva.equipamento}`);
+            });
+            achados = `<br><small class="func-equip-achado">${lista.map(escapar).join(" · ")}</small>`;
+        }
         let etiqueta = "";
         const temTermoPendente = regs.some((f) => f.termoStatus === "Pendente" || (f.reserva && f.reserva.termoStatus === "Pendente"));
         const temManutencao = regs.some((f) => (f.equipamentos || []).some((eq) => eq.status === "Em manutenção") || f.status === "Em manutenção");
@@ -2239,22 +2303,20 @@ function renderFuncionarios() {
 
         return `
       <tr class="linha-clicavel" data-abrir-detalhes-func="${escapar(regs[0].id)}" data-grupo-func="${escapar(g.chave)}">
-        <td><span class="nome-destaque"><strong>${escapar(g.nome)}</strong></span> ${etiqueta}${empresas ? `<br><small style="color: var(--texto-suave);">${escapar(empresas)}</small>` : ""}</td>
+        <td><span class="nome-destaque"><strong>${escapar(g.nome)}</strong></span> ${etiqueta}${totalEquips > 1 ? ` <span class="func-qtd-equips" title="Clique para ver todos os equipamentos">${totalEquips} equipamentos</span>` : ""}${empresas ? `<br><small style="color: var(--texto-suave);">${escapar(empresas)}</small>` : ""}${achados}</td>
         <td style="text-align: right;">
-          <button class="btn btn-light" type="button" style="padding: 4px 8px; font-size: 0.75rem;">Ver Detalhes</button>
+          <button class="btn btn-light" type="button" style="padding: 4px 8px; font-size: 0.75rem;">${totalEquips > 1 ? "Ver Equipamentos" : "Ver Detalhes"}</button>
           ${unico ? `<button class="btn btn-light" type="button" data-remover-ativo="${escapar(regs[0].id)}" style="padding: 4px 8px; font-size: 0.75rem; color: var(--vermelho-aveludado); border-color: var(--vermelho-borda-suave); margin-left: 4px;">Remover</button>` : ""}
         </td>
       </tr>`;
     }).join("");
 
-    $("#vazioFunc").hidden = grupos.length > 0;
+    const vazio = $("#vazioFunc");
+    vazio.hidden = grupos.length > 0;
+    vazio.textContent = (busca || buscaEquip) ? "Nenhum resultado para a pesquisa." : "Nenhum funcionário ativo cadastrado.";
 
-    // Relação aberta (funcionário com mais de um registro)
-    const grupoAberto = grupoFuncAberto ? grupos.find((g) => g.chave === grupoFuncAberto && g.registros.length > 1) : null;
-    if (!grupoAberto) grupoFuncAberto = null;
-    $("#wrapListaFunc").hidden = !!grupoAberto;
-    $("#relacaoFunc").hidden = !grupoAberto;
-    $("#relacaoFunc").innerHTML = grupoAberto ? renderRelacaoFuncionario(grupoAberto) : "";
+    // Mantém a janela de relação atualizada após editar/desligar/remover um registro
+    if (grupoFuncAberto) atualizarModalRelacaoFuncionario();
 }
 
 function renderGradeObras() {

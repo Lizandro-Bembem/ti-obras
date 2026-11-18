@@ -14,7 +14,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=9">
+  <link rel="stylesheet" href="style.css?v=10">
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#161616">
 </head>
@@ -308,6 +308,7 @@
           <h2>Lista de Funcionários Ativos</h2>
           <div class="botoes-linha">
             <input type="search" id="buscaFuncionario" placeholder="Pesquisar funcionário ativo...">
+            <input type="search" id="buscaEquipFunc" placeholder="Pesquisar equipamento...">
           </div>
         </div>
         <div class="tabela-wrap" id="wrapListaFunc">
@@ -322,7 +323,6 @@
           </table>
           <p class="vazio" id="vazioFunc" hidden>Nenhum funcionário ativo cadastrado.</p>
         </div>
-        <div id="relacaoFunc" class="relacao-func" hidden></div>
       </section>
 
       <section class="painel" id="painelListaDesligados" hidden>
@@ -697,6 +697,19 @@
       <button type="button" class="btn btn-light" id="btnEditarPeloDetalhe">Editar</button>
       <button type="button" class="btn btn-light" id="btnDesligarPeloDetalhe" style="color: var(--vermelho-aveludado); border-color: var(--vermelho-borda-suave);">Desligar</button>
       <button type="button" class="btn btn-perigo" id="btnRemoverAtivoPeloDetalhe">Remover Funcionário</button>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="dlgRelacaoFunc">
+  <div class="modal-card-conteudo">
+    <div class="modal-cabecalho">
+      <h3 id="relacaoFuncTitulo">Funcionário</h3>
+    </div>
+    <div class="relacao-func-resumo" id="relacaoFuncResumo"></div>
+    <div class="relacao-func" id="relacaoFuncCorpo"></div>
+    <div class="dlg-actions">
+      <button type="button" class="btn btn-light" id="fecharRelacaoFunc">Fechar</button>
     </div>
   </div>
 </dialog>
@@ -1082,6 +1095,6 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="script.js?v=9"></script>
+<script src="script.js?v=10"></script>
 </body>
-</html>
+</html>

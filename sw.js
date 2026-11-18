@@ -1,6 +1,6 @@
 /* Service Worker — TI em Obras
    Cache offline + atualizações automáticas. */
-const CACHE = "ti-obras-cache-v9";
+const CACHE = "ti-obras-cache-v10";
 const ARQUIVOS = [
     "./",
     "./index.html",
